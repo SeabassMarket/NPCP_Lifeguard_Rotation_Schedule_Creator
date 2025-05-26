@@ -79,3 +79,37 @@ calculator = CalculateSchedule(staticAppInfo=staticAppInfo)
 calculator.assignBreaks()
 calculator.calculateSchedule()
 calculator.printSchedule()
+
+
+values = [
+    [4, 8, 1, 3],
+    [9, 1, 4, 2],
+    [3, 2, 4],
+    [8, 4, 9, 11],
+    [3, 10, 7, 5, 8],
+]
+
+options = calculator.recursivelyGenerateRearrangementPermutations(values)
+staticAppInfo.printRecursivelyLongDictionary(options)
+print()
+optionsList = calculator.recursivelyInterpretGeneratedDictionary(options)
+for value in optionsList:
+    print(value)
+
+print()
+def listsAreEqual(list1, list2):
+    result = True
+    for i in range(0, len(list1)):
+        if list1[i] != list2[i]:
+            result = False
+    return result
+
+result1 = False
+for n in range(0, len(optionsList)):
+    for k in range(0, len(optionsList)):
+        if k != n:
+            if listsAreEqual(optionsList[n], optionsList[k]):
+                result1 = True
+print(result1)
+
+print(len(optionsList), "possible permutations generated")

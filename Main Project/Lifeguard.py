@@ -63,16 +63,68 @@ class Lifeguard:
         self.updateBreaks()
 
         #Initialize random chance selections to 0
-        self._randomChance = 0
+        self._randomChance = dict()
+        self.resetRandomChance()
 
+    #Swap the random chances going back to a certain time starting at a certain time with another lifeguard
+    def swapRandomChances(self, otherLifeguard, backTime, currentTime):
+
+        #Check type
+        if (not isinstance(otherLifeguard, Lifeguard) or
+        not isinstance(backTime, Time) or
+        not isinstance(currentTime, Time)):
+            print("ERROR IN LIFEGUARD - sRC")
+            return
+
+        #Get the random chance dictionary of the other lifeguard
+        otherRandomChance = otherLifeguard.getRandomChanceFullDictionary()
+
+        #Swap the values between the two times given
+        for t in range(backTime.getMinutes(), currentTime.getMinutes(), self._staticAppInfo.getTimeInterval()):
+            timeBeingAnalyzed = Time().setTimeWithMinutes(t)
+            otherTime = Time()
+            for time in otherRandomChance:
+                if time.equals(timeBeingAnalyzed):
+                    otherTime = time
+            thisTime = Time()
+            for time in self._randomChance:
+                if time.equals(timeBeingAnalyzed):
+                    thisTime = time
+            tempRandomChanceValue = otherRandomChance[otherTime]
+            otherRandomChance[otherTime] = self._randomChance[thisTime]
+            self._randomChance[thisTime] = tempRandomChanceValue
+
+
+    #Returns the random chance dictionary of this lifeguard
+    def getRandomChanceFullDictionary(self):
+        return self._randomChance
 
     #Adds one to random chance
-    def incrementRandomChance(self):
-        self._randomChance += 1
+    def incrementRandomChance(self, currentTime):
+        for time in self._randomChance:
+            if time.equals(currentTime):
+                self._randomChance[time] = 1
+
+    #Resets the random chance
+    def resetRandomChance(self):
+        self._randomChance = dict()
+        for t in range(self._startTime.getMinutes(),
+                       self._endTime.getMinutes(),
+                       self._staticAppInfo.getTimeInterval()):
+            time = Time().setTimeWithMinutes(t)
+            self._randomChance[time] = 0
 
     #Returns the random chance
-    def getRandomChance(self):
-        return self._randomChance
+    def getRandomChance(self, currentTime):
+        count = 0
+        if isinstance(currentTime, Time):
+            for time in self._randomChance:
+                if time.getMinutes() < currentTime.getMinutes():
+                    count += self._randomChance[time]
+        else:
+            print("ERROR IN LIFEGUARD - gRC")
+        return count
+
 
     #Returns how long the lifeguard has been up on stand given the time
     def getIntervalsUpOnStand(self, time):
@@ -88,7 +140,6 @@ class Lifeguard:
                     index = i
             #If the index is not assigned then the time given is invalid
             if index is None:
-                print("ERROR IN LIFEGUARD - gIPOS time not found")
                 return -1
 
             #Get the upStands list
@@ -111,6 +162,38 @@ class Lifeguard:
     #Returns the lifeguard's name
     def getName(self):
         return self._name
+
+    #Swaps schedules up in a certain time frame with another lifeguard
+    def swapSchedulesBetweenTimes(self, otherLifeguard, backTime, currentTime):
+
+        #Check type
+        if (not isinstance(otherLifeguard, Lifeguard) or
+        not isinstance(backTime, Time) or
+        not isinstance(currentTime, Time)):
+            print("ERROR IN LIFEGUARD - sSBT")
+            return
+
+        #Get the other schedule dictionary from the other lifeguard
+        otherScheduleDictionary = otherLifeguard.getSchedule()
+
+        #Iterate through and swap each stand at each location between back time and current time
+        for t in range(backTime.getMinutes(), currentTime.getMinutes(), self._staticAppInfo.getTimeInterval()):
+
+            #Get the keys for the two dictionaries
+            timeBeingAnalyzed = Time().setTimeWithMinutes(t)
+            otherTime = Time()
+            for time in otherScheduleDictionary:
+                if time.equals(timeBeingAnalyzed):
+                    otherTime = time
+            thisTime = Time()
+            for time in self._schedule:
+                if time.equals(timeBeingAnalyzed):
+                    thisTime = time
+
+            #Swap the values
+            tempStandValue = otherScheduleDictionary[otherTime]
+            otherScheduleDictionary[otherTime] = self._schedule[thisTime]
+            self._schedule[thisTime] = tempStandValue
 
     #Swaps schedules with another lifeguard
     def swapSchedules(self, otherLifeguard):

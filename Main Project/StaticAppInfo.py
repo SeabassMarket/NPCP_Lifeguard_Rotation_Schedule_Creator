@@ -1,6 +1,4 @@
 #import libraries
-from types import LambdaType
-
 from Time import Time
 import tkinter as tk
 from tkinter import ttk
@@ -29,6 +27,26 @@ class StaticAppInfo:
         self._timeInterval = 20  # The time interval to be used between event times
         self._longestTimeWorking = 300 # The longest amount of time a lifeguard is consecutively allowed to work
         self._breakTime = 40 # How long a lifeguard's break is
+
+        #For calculations
+        self._standCombos = {
+            "A": ["B", "C"],
+            "B": [],
+            "C": ["E"],
+            "J": ["K"],
+            "E": ["K", "H"],
+            "F": ["G"],
+            "G": [],
+            "H": ["I", "K"],
+            "I": ["K"],
+            "K": [],
+            "T": ["S"],
+            "S": [],
+        }
+
+    #Returns the stand combos
+    def getStandCombos(self):
+        return self._standCombos
 
     #Returns how many intervals long the break time is
     def getBreakInterval(self):
@@ -280,3 +298,39 @@ class StaticAppInfo:
             tempTime = timesList[i]
             timesList[i] = timesList[minIndex]
             timesList[minIndex] = tempTime
+
+    #Swaps items in a list given the indexes
+    @staticmethod
+    def swapItems(givenList, index1, index2):
+
+        if isinstance(givenList, list) and isinstance(index1, int) and isinstance(index2, int):
+            temp = givenList[index1]
+            givenList[index1] = givenList[index2]
+            givenList[index2] = temp
+        else:
+            print("ERROR IN STATIC APP INFO - swap Items")
+
+    #Prints a dictionary that has been created recursively and the last values are lists
+    def printRecursivelyLongDictionary(self, dictionary, depth=None):
+
+        #Set the depth if it is None
+        if depth is None:
+            depth = []
+
+        #If it is a dictionary
+        if isinstance(dictionary, dict):
+            for key in dictionary:
+                #Print where it currently is
+                print(len(depth) * "-->"  + str(key), "{")
+
+                #Prepare the next one
+                # Create a duplicate of depth
+                newDepth = list(depth)
+                newDepth.append(key)
+                self.printRecursivelyLongDictionary(dictionary[key], newDepth)
+                print(len(depth) * "-->" + "}")
+
+        #If it is a list
+        if isinstance(dictionary, list):
+            print(len(depth) * "-->", end="")
+            print(dictionary)
