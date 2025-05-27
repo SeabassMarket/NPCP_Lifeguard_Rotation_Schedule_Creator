@@ -81,7 +81,6 @@ class CalculateSchedule:
 
         #Initialize the breaks instance variable
         self._breaks = []
-        self._first = True
 
     #Calculate the schedule itself by creating each schedule for each lifeguard
     def calculateSchedule(self):
@@ -118,9 +117,6 @@ class CalculateSchedule:
     #Optimizes the stands so that the lifeguard going on break has the most up stand intervals
     def optimizeUpcomingBreaks(self, currentTime):
 
-        if not self._first:
-            return
-
         #Check to make sure currentTime is a time
         if not isinstance(currentTime, Time):
             print("ERROR IN CALCULATE SCHEDULE - oUB")
@@ -149,8 +145,6 @@ class CalculateSchedule:
         possibilitiesForStandSwapsForEachLifeguard = dict()
         for lifeguard in lifeguardsGoingOnBreak:
 
-            self._first = False
-
             #Create a dictionary with times as the key and a list of the intervals up on stand for each lifeguard as
             #the value
             timesAndIntervalsUpOnStand = dict()
@@ -159,13 +153,7 @@ class CalculateSchedule:
             timesAndIntervalsUpOnStandGoingOnBreak = dict()
 
             #Get the time that we are going back until
-            timesOfBreaksAndShiftStarts = [lifeguard.getShiftStartTime().getMinutes()]
-            for breakTime in lifeguard.getBreakTimes():
-                timesOfBreaksAndShiftStarts.append(breakTime.getMinutes())
-            for t in range(len(timesOfBreaksAndShiftStarts) - 1, -1, -1):
-                if timesOfBreaksAndShiftStarts[t] > currentTime.getMinutes():
-                    timesOfBreaksAndShiftStarts.pop(t)
-            timeFurthestBack = Time().setTimeWithMinutes(max(timesOfBreaksAndShiftStarts))
+            timeFurthestBack = lifeguard.getFurthestTimeBackToDisruption(currentTime)
 
             #Get the time variable that will be used to go backwards
             timeBeingAnalyzed = currentTime.getMinutes()
@@ -196,6 +184,7 @@ class CalculateSchedule:
                 #Get the intervals on stand at this time for the lifeguard going up on stand
                 respectiveIntervalsUpOnStandGoingOnBreak = timesAndIntervalsUpOnStandGoingOnBreak[time]
 
+                #If the lifeguard going on break has no intervals on stand at this time, check the others
                 if respectiveIntervalsUpOnStandGoingOnBreak == 0:
 
                     # Create a list of the respective intervals up on stand
@@ -203,9 +192,18 @@ class CalculateSchedule:
 
                     #Check the list to see if it has a matching value of 0
                     #If it does add the index to the indices that match list
+                    #NOTE: Do not add the index to the list if the time being analyzed is past the furthest back time
+                    #as calculated using the current time
                     indicesThatMatchList = []
                     for i in range(0, len(respectiveIntervalsUpOnStandList)):
-                        if respectiveIntervalsUpOnStandList[i] == 0:
+
+                        #Generate the furthest back time (time to nearest break or shift start backwards)
+                        furthestBackTime = lifeguardsWorkingAtTime[i].getFurthestTimeBackToDisruption(currentTime)
+
+                        #Check to see if the guard at this index has 0 up stand intervals at this time and also that a
+                        #swap would be viable. A swap is not viable if the time is less than the furthest back time
+                        if (respectiveIntervalsUpOnStandList[i] == 0 and
+                        furthestBackTime.getMinutes() <= time):
                             indicesThatMatchList.append(i)
 
                     #Add the entry to the dictionary
@@ -296,14 +294,47 @@ class CalculateSchedule:
                 uniqueSwappableLifeguards[maxIndex] = tempUniqueLifeguard
         '''
 
-        #Go through each lifeguard and perform a swap if possible. Try to pick another lifeguard that does not already
-        #exist for the others and swap only if it is beneficial
-        #This is achieved via a recursive algorithm
+        #Go through each lifeguard and perform a swap if possible. Pick the best possible choice, which is calculated
+        #by a recursive algorithm that checks all the permutations
         if len(lifeguardsGoingOnBreak) > 0:
-            bestPermutation = self.recursivelyCheckLifeguardRearrangementOptions(uniqueLifeguardsThatCanBeSwappedWith,
-                                                                                 uniqueLifeguardsUpStandIntervalsScore)
-                
+            bestPermutation = self.getBestPossiblePermutationOfLifeguardRearrangements(
+                uniqueLifeguardsThatCanBeSwappedWith,
+                uniqueLifeguardsUpStandIntervalsScore,
+                lifeguardGoingOnBreakUpStandIntervalScore
+            )
+            #Swap the shifts
+            for i in range(0, len(lifeguardsGoingOnBreak)):
+                if isinstance(bestPermutation[i], int):
 
+                    #Get the index of the lifeguard from the permutation (index in lifeguards Working At Time)
+                    lifeguardNum = bestPermutation[i]
+
+                    #Get the lifeguard being swapped (in lifeguards going on break)
+                    lifeguardBeingSwapped = lifeguardsGoingOnBreak[i]
+
+                    #Calculate the back time
+                    backTime = Time()
+                    for time in possibilitiesForStandSwapsForEachLifeguard[lifeguardBeingSwapped]:
+                        lifeguardSwaps = possibilitiesForStandSwapsForEachLifeguard[lifeguardBeingSwapped][time]
+                        if lifeguardNum in lifeguardSwaps:
+                            backTime = Time().setTimeWithMinutes(time)
+                            break
+
+                    #Get the lifeguard being swapped with using the previously found index
+                    lifeguardBeingSwappedWith = lifeguardsWorkingAtTime[lifeguardNum]
+
+                    #Swap the random chance and schedule between the two guards (using back time and next time because
+                    #it is inclusive of the first time but exclusive of the last time)
+                    lifeguardBeingSwapped.swapSchedulesBetweenTimes(lifeguardBeingSwappedWith,
+                                                                    backTime,
+                                                                    nextTime)
+                    lifeguardBeingSwapped.swapRandomChances(lifeguardBeingSwappedWith,
+                                                            backTime,
+                                                            nextTime)
+                    #print("Swapped " + str(lifeguardBeingSwapped.getIdNum()), end="")
+                    #print(" with " + str(lifeguardBeingSwappedWith.getIdNum()))
+
+        '''
         #Print info
         for lifeguard in possibilitiesForStandSwapsForEachLifeguard:
             print(lifeguard.getIdNum(), lifeguardGoingOnBreakUpStandIntervalScore[lifeguard])
@@ -319,22 +350,64 @@ class CalculateSchedule:
             print(lifeguard.getIdNum(), end=" ")
         if len(lifeguardsGoingOnBreak) > 0:
             print()
+        '''
 
     #Then returns the best possible permutation of lifeguard combinations
-    def recursivelyCheckLifeguardRearrangementOptions(self,
-                                                      uniqueLifeguardsThatCanBeSwappedWith,
-                                                      uniqueLifeguardsUpStandIntervalsScore):
+    def getBestPossiblePermutationOfLifeguardRearrangements(self,
+                                                            uniqueLifeguardsThatCanBeSwappedWith,
+                                                            uniqueLifeguardsUpStandIntervalsScore,
+                                                            lifeguardGoingOnBreakUpStandIntervalScore):
 
         #Create values being looked at
-        values = list(uniqueLifeguardsThatCanBeSwappedWith.values())
+        lifeguardValues = list(uniqueLifeguardsThatCanBeSwappedWith.values())
 
         #First create a list of the different permutations that are possible
-        optionsDictionary = self.recursivelyGenerateRearrangementPermutations(values)
+        optionsDictionary = self.recursivelyGenerateRearrangementPermutations(lifeguardValues)
 
         #Generate the permutations in one giant list
         optionsList = self.recursivelyInterpretGeneratedDictionary(optionsDictionary)
 
-        return []
+        #Go through each one of the options and give it a score
+        optionsScores = []
+        scoreValues = list(uniqueLifeguardsUpStandIntervalsScore.values())
+        for option in optionsList:
+            score = 0
+            for i in range(0, len(option)):
+                if isinstance(option[i], int):
+                    lifeguardValuesForThisGuard = lifeguardValues[i]
+                    scoreValuesForThisGuard = scoreValues[i]
+                    index = lifeguardValuesForThisGuard.index(option[i])
+                    score += scoreValuesForThisGuard[index]
+            optionsScores.append([score, option])
+
+        #Now that we have a score for each one, filter for the ones that have the highest cumulative score
+        maxScore = 0
+        for score in optionsScores:
+            if score[0] > maxScore:
+                maxScore = score[0]
+        for i in range(len(optionsScores) - 1, -1, -1):
+            if optionsScores[i][0] != maxScore:
+                optionsScores.pop(i)
+
+        #Bad options have been popped, so now find the options that has the least difference between the most up stands
+        #before break and the least up stands before break
+        for option in optionsScores:
+            optionBeingAnalyzed = option[1]
+            newUpStandIntervalsList = []
+            for i in range(0, len(optionBeingAnalyzed)):
+                newUpStandInterval = list(lifeguardGoingOnBreakUpStandIntervalScore.values())[i]
+                if isinstance(optionBeingAnalyzed[i], int):
+                    lifeguardValuesForThisGuard = lifeguardValues[i]
+                    scoreValuesForThisGuard = scoreValues[i]
+                    index = lifeguardValuesForThisGuard.index(optionBeingAnalyzed[i])
+                    newUpStandInterval += scoreValuesForThisGuard[index]
+                newUpStandIntervalsList.append(newUpStandInterval)
+            biggestDisparity = max(newUpStandIntervalsList) - min(newUpStandIntervalsList)
+            option[0] = biggestDisparity
+
+        #Now that we have gone through each of the best choices, the choices left are essentially tied. Just return a
+        #random choice
+        return random.choice(optionsScores)[1]
 
     # Interpret the dictionary generated recursively to return just a straight-up list of the permutations
     def recursivelyInterpretGeneratedDictionary(self, dictionary, depth=None, optionsList=None):
@@ -401,18 +474,16 @@ class CalculateSchedule:
             if isinstance(options, list):
                 options.append(value)
 
-        #Do a different exception if the length of the values at this depth is 0
-        if len(valuesAtThisDepth) == 0:
+        #Pick doing nothing at all
+        # For dictionaries
+        if isinstance(options, dict):
+            newDepth = list(depth)
+            newDepth.append("NOTHING")
+            options["NOTHING"] = self.recursivelyGenerateRearrangementPermutations(values, newDepth)
 
-            #For dictionaries
-            if isinstance(options, dict):
-                newDepth = list(depth)
-                newDepth.append("NOTHING")
-                options["NOTHING"] = self.recursivelyGenerateRearrangementPermutations(values, newDepth)
-
-            #For lists
-            if isinstance(options, list):
-                options.append("NOTHING")
+        # For lists
+        if isinstance(options, list):
+            options.append("NOTHING")
 
         return options
 
@@ -483,7 +554,6 @@ class CalculateSchedule:
                 intervalsUpOnStand = []
                 for lifeguard in tempLifeguards:
                     intervalsUpOnStand.append(lifeguard.getIntervalsUpOnStand(currentTime))
-
 
                 #First figure out if we can use the minimum intervals method and get the lifeguard who would apply for '
                 # this method
@@ -740,7 +810,7 @@ class CalculateSchedule:
 
             #Now with the confirmed best time, assign the break
             lifeguard.addBreakTime(timeWithHighestRatio)
-            print("Leftover algorithm used on lifeguard", lifeguard.getName())
+            #print("Leftover algorithm used on lifeguard", lifeguard.getName())
 
     #Calculates the breaks based on the lifeguard information
     def calculateBreaks(self):
@@ -967,13 +1037,16 @@ class CalculateSchedule:
     #Prints the schedule (good for testing)
     def printSchedule(self):
 
+        #Establish space length
+        spaceLength = 4
+
         #Print the first two line
         line = ""
         #Header
         line += "Schedule" + "|"
         #Lifeguard numbers up top
         for lifeguard in self._lifeguards:
-            line += (3- len(str(lifeguard.getIdNum()))) * " " + str(lifeguard.getIdNum()) + "|"
+            line += (spaceLength - len(str(lifeguard.getIdNum()))) * " " + str(lifeguard.getIdNum()) + "|"
         #Print the line and then the line of dashes
         print(line)
         print("-" * len(line))
@@ -999,10 +1072,10 @@ class CalculateSchedule:
             for lifeguard in self._lifeguards:
                 stand = lifeguard.getStand(currentTime)
                 if stand == "BREAK":
-                    stand = "Y"
+                    stand = "YYY"
                 if stand == "EMPTY":
                     stand = "NA"
-                line += (3 - len(stand)) * " " + stand + "|"
+                line += (spaceLength - len(stand)) * " " + stand + "|"
 
             #Print the time
             print(line)

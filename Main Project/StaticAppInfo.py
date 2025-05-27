@@ -44,6 +44,14 @@ class StaticAppInfo:
             "S": [],
         }
 
+        self._count = 0
+
+    def incrementCount(self):
+        self._count += 1
+
+    def getCount(self):
+        return self._count
+
     #Returns the stand combos
     def getStandCombos(self):
         return self._standCombos

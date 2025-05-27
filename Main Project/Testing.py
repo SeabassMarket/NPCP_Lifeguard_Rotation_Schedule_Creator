@@ -80,7 +80,7 @@ calculator.assignBreaks()
 calculator.calculateSchedule()
 calculator.printSchedule()
 
-
+'''TEST CODE FOR RECURSIVE FUNCTIONS
 values = [
     [4, 8, 1, 3],
     [9, 1, 4, 2],
@@ -97,9 +97,10 @@ for value in optionsList:
     print(value)
 
 print()
-def listsAreEqual(list1, list2):
+def listsAreEqual(list1, list2, s):
     result = True
     for i in range(0, len(list1)):
+        s.incrementCount()
         if list1[i] != list2[i]:
             result = False
     return result
@@ -108,8 +109,9 @@ result1 = False
 for n in range(0, len(optionsList)):
     for k in range(0, len(optionsList)):
         if k != n:
-            if listsAreEqual(optionsList[n], optionsList[k]):
+            if listsAreEqual(optionsList[n], optionsList[k], staticAppInfo):
                 result1 = True
 print(result1)
+print(staticAppInfo.getCount())
 
-print(len(optionsList), "possible permutations generated")
+print(len(optionsList), "possible permutations generated")'''

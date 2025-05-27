@@ -66,13 +66,38 @@ class Lifeguard:
         self._randomChance = dict()
         self.resetRandomChance()
 
+    #Returns the furthest time back until either the nearest shift start or break end
+    def getFurthestTimeBackToDisruption(self, currentTime):
+
+        #Check the type
+        if not isinstance(currentTime, Time):
+            print("ERROR IN LIFEGUARD - gFTBTD")
+            return Time()
+
+        #Create a list with all the shift start times and the break times
+        #Initialize the list with the shift start
+        timesOfBreaksAndShiftStarts = [self._startTime.getMinutes()]
+
+        #Append the break times
+        for breakTime in self._breakTimes:
+            #Appends the end of the break
+            timesOfBreaksAndShiftStarts.append(breakTime.getMinutes() + self._staticAppInfo.getBreakTime())
+
+        #Go back in time and go until the break times
+        for t in range(len(timesOfBreaksAndShiftStarts) - 1, -1, -1):
+            if timesOfBreaksAndShiftStarts[t] <= currentTime.getMinutes():
+                return Time().setTimeWithMinutes(timesOfBreaksAndShiftStarts[t])
+
+        #Return a string message if the current time is before the shift start (which will result in no time detected)
+        return "CURRENT TIME BEFORE SHIFT START"
+
     #Swap the random chances going back to a certain time starting at a certain time with another lifeguard
-    def swapRandomChances(self, otherLifeguard, backTime, currentTime):
+    def swapRandomChances(self, otherLifeguard, backTime, nextTime):
 
         #Check type
         if (not isinstance(otherLifeguard, Lifeguard) or
         not isinstance(backTime, Time) or
-        not isinstance(currentTime, Time)):
+        not isinstance(nextTime, Time)):
             print("ERROR IN LIFEGUARD - sRC")
             return
 
@@ -80,7 +105,7 @@ class Lifeguard:
         otherRandomChance = otherLifeguard.getRandomChanceFullDictionary()
 
         #Swap the values between the two times given
-        for t in range(backTime.getMinutes(), currentTime.getMinutes(), self._staticAppInfo.getTimeInterval()):
+        for t in range(backTime.getMinutes(), nextTime.getMinutes(), self._staticAppInfo.getTimeInterval()):
             timeBeingAnalyzed = Time().setTimeWithMinutes(t)
             otherTime = Time()
             for time in otherRandomChance:
@@ -164,12 +189,12 @@ class Lifeguard:
         return self._name
 
     #Swaps schedules up in a certain time frame with another lifeguard
-    def swapSchedulesBetweenTimes(self, otherLifeguard, backTime, currentTime):
+    def swapSchedulesBetweenTimes(self, otherLifeguard, backTime, nextTime):
 
         #Check type
         if (not isinstance(otherLifeguard, Lifeguard) or
         not isinstance(backTime, Time) or
-        not isinstance(currentTime, Time)):
+        not isinstance(nextTime, Time)):
             print("ERROR IN LIFEGUARD - sSBT")
             return
 
@@ -177,7 +202,7 @@ class Lifeguard:
         otherScheduleDictionary = otherLifeguard.getSchedule()
 
         #Iterate through and swap each stand at each location between back time and current time
-        for t in range(backTime.getMinutes(), currentTime.getMinutes(), self._staticAppInfo.getTimeInterval()):
+        for t in range(backTime.getMinutes(), nextTime.getMinutes(), self._staticAppInfo.getTimeInterval()):
 
             #Get the keys for the two dictionaries
             timeBeingAnalyzed = Time().setTimeWithMinutes(t)
@@ -260,6 +285,7 @@ class Lifeguard:
                         self._schedule[scheduleTime] = "BREAK"
 
     #Adds a break to the list
+    #NOTE: Breaks must be assigned in increasing order
     def addBreakTime(self, givenTime):
         for breakTime in self._breakTimes:
             if breakTime.equals(givenTime):
