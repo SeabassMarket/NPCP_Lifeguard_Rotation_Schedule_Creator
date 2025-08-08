@@ -1,5 +1,6 @@
 # import libraries
 from Time import Time
+from Stand import Stand
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font
@@ -30,18 +31,14 @@ class StaticAppInfo:
 
         # For calculations
         self._standCombos = {
+            "T": ["S"],
             "A": ["B", "C"],
-            "B": [],
             "C": ["E"],
             "J": ["K"],
             "E": ["K", "H"],
             "F": ["G"],
-            "G": [],
             "H": ["I", "K"],
             "I": ["K"],
-            "K": [],
-            "T": ["S"],
-            "S": [],
         }
 
         self._count = 0
@@ -341,3 +338,47 @@ class StaticAppInfo:
         if isinstance(dictionary, list):
             print(len(depth) * "-->", end="")
             print(dictionary)
+
+    def getStandComboPermutations(
+        self, permutations: dict[int, list[list[str]]] = {}, depth: list[str] = []
+    ):
+        def addPermutation(permutation: list[str]):
+            permutation = list(permutation)
+
+            length = len(permutation)
+
+            permutationsOfSameLength = permutations.get(length)
+
+            if permutationsOfSameLength is None:
+                permutations[length] = [permutation]
+            else:
+                permutationsOfSameLength.append(permutation)
+
+        if len(depth) < 1:
+            for stand in self._standCombos:
+                newDepth = [stand]
+
+                self.getStandComboPermutations(permutations, newDepth)
+                addPermutation(newDepth)
+        else:
+            possibleCombos = self._standCombos.get(depth[-1])
+
+            if possibleCombos is None:
+                return permutations
+
+            for combo in possibleCombos:
+                newDepth = list(depth)
+
+                newDepth.append(combo)
+
+                self.getStandComboPermutations(permutations, newDepth)
+                addPermutation(newDepth)
+
+        return permutations
+
+    def updateStandCombos(self, stands: list[Stand]):
+        for stand in stands:
+            stand = stand.getName()
+
+            if stand not in self._standCombos:
+                self._standCombos[stand] = []

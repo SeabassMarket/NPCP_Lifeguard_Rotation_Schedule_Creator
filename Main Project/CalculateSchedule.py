@@ -122,7 +122,7 @@ class CalculateSchedule:
             # Swap stands in case someone is starting a break next to optimize stand up intervals
             self.optimizeUpcomingBreaks(currentTime)
 
-        # Reorganize the lifeguard stands so fix circular issues, duplicates, and make it pretty
+        # Reorganize the lifeguard stands to fix circular issues, duplicates, and make it pretty
         self.reorganizeLifeguards()
 
     # Optimizes the stands so that the lifeguard going on break has the most up stand intervals
@@ -775,7 +775,7 @@ class CalculateSchedule:
 
     # Reorganizes stands that lifeguards are on to optimize relieving
     def reorganizeLifeguards(self):
-        pass
+        self._staticAppInfo.updateStandCombos(self._upStands)
 
     # Returns a list of lifeguards up on stand at a given time
     def getLifeguardsUpOnStandAtSpecificTime(self, currentTime):

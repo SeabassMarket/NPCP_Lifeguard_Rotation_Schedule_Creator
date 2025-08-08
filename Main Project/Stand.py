@@ -1,6 +1,4 @@
 # Import libraries
-from select import error
-
 from Time import Time
 
 
