@@ -694,7 +694,9 @@ class CalculateSchedule:
                     # Get list of intervals down on stand
                     intervalsDownOnStand = []
                     for lifeguard in tempLifeguards:
-                        intervalsDownOnStand.append(lifeguard.getIntervalsDownOnStand(currentTime))
+                        intervalsDownOnStand.append(
+                            lifeguard.getIntervalsDownOnStand(currentTime)
+                        )
 
                     # Check eligibility of the third picking algorithm
                     tieBreaker = False
