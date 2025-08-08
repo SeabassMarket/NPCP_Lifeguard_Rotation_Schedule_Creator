@@ -1,14 +1,14 @@
-#import libraries
+# import libraries
 from CalculateSchedule import CalculateSchedule
 from StaticAppInfo import StaticAppInfo
 from Time import Time
 import tkinter as tk
 
-'''THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION   '''
-#Create static app info
+"""THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION   """
+# Create static app info
 staticAppInfo = StaticAppInfo(tk.Tk())
 
-#Create all the information for the stands
+# Create all the information for the stands
 upStands = {
     "A": [Time(hour=11, minute=0), Time(hour=20, minute=40), 1],
     "B": [Time(hour=11, minute=0), Time(hour=20, minute=40), 1],
@@ -44,7 +44,7 @@ standData = {
 
 staticAppInfo.setEventDataSpecific(standData, eventDescriptor="stand")
 
-#Create information for the stands
+# Create information for the stands
 lifeguards = {
     "1": [Time(hour=9, minute=0), Time(hour=17, minute=0)],
     "2": [Time(hour=9, minute=0), Time(hour=17, minute=0)],
@@ -73,14 +73,18 @@ lifeguardData = {
 
 staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
 
-'''END OF HARDCODING, BEGINNING OF DEVELOPING ALGORITHM'''
+"""END OF HARDCODING, BEGINNING OF DEVELOPING ALGORITHM"""
 
 calculator = CalculateSchedule(staticAppInfo=staticAppInfo)
 calculator.assignBreaks()
 calculator.calculateSchedule()
 calculator.printSchedule()
 
-'''TEST CODE FOR RECURSIVE FUNCTIONS
+lifeguard = calculator.getLifeguards()[16]
+for time in lifeguard.getSchedule():
+    print(time.get12Time(), ":", lifeguard.getIntervalsDownOnStand(time))
+
+"""TEST CODE FOR RECURSIVE FUNCTIONS
 values = [
     [4, 8, 1, 3],
     [9, 1, 4, 2],
@@ -114,4 +118,4 @@ for n in range(0, len(optionsList)):
 print(result1)
 print(staticAppInfo.getCount())
 
-print(len(optionsList), "possible permutations generated")'''
+print(len(optionsList), "possible permutations generated")"""

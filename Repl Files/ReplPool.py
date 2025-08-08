@@ -8,39 +8,42 @@ from ReplTime import Time
 
 # Creates a pool object to store information and data about a pool
 class Pool:
-
     # Constructs pool object
-    def __init__(self,
-                 poolOpen=None,
-                 poolClose=None,
-                 upperPoolOpen=None,
-                 upperPoolClose=None,
-                 lowerPoolOpen=None,
-                 lowerPoolClose=None,
-                 defaultUpperPoolStands=None,
-                 defaultLowerPoolStands=None,
-                 breakLength=None,
-                 timePerStand=None,
-                 maxTimeWithoutBreak=None,
-                 maxGuardsOnBreak=2,
-                 lifeguards=None,
-                 diveTestTime=None,
-                 swimTestTime=None):
-        self.setPool(poolOpen,
-                     poolClose,
-                     upperPoolOpen,
-                     upperPoolClose,
-                     lowerPoolOpen,
-                     lowerPoolClose,
-                     defaultUpperPoolStands,
-                     defaultLowerPoolStands,
-                     breakLength,
-                     timePerStand,
-                     maxTimeWithoutBreak,
-                     maxGuardsOnBreak,
-                     lifeguards,
-                     diveTestTime,
-                     swimTestTime)
+    def __init__(
+        self,
+        poolOpen=None,
+        poolClose=None,
+        upperPoolOpen=None,
+        upperPoolClose=None,
+        lowerPoolOpen=None,
+        lowerPoolClose=None,
+        defaultUpperPoolStands=None,
+        defaultLowerPoolStands=None,
+        breakLength=None,
+        timePerStand=None,
+        maxTimeWithoutBreak=None,
+        maxGuardsOnBreak=2,
+        lifeguards=None,
+        diveTestTime=None,
+        swimTestTime=None,
+    ):
+        self.setPool(
+            poolOpen,
+            poolClose,
+            upperPoolOpen,
+            upperPoolClose,
+            lowerPoolOpen,
+            lowerPoolClose,
+            defaultUpperPoolStands,
+            defaultLowerPoolStands,
+            breakLength,
+            timePerStand,
+            maxTimeWithoutBreak,
+            maxGuardsOnBreak,
+            lifeguards,
+            diveTestTime,
+            swimTestTime,
+        )
 
     # Getters
     def getPoolOpen(self):
@@ -98,8 +101,9 @@ class Pool:
         return Time(self._timePerStand.get24Hour(), self._timePerStand.getMinute())
 
     def getMaxTimeWithoutBreak(self):
-        return Time(self._maxTimeWithoutBreak.get24Hour(),
-                    self._maxTimeWithoutBreak.getMinute())
+        return Time(
+            self._maxTimeWithoutBreak.get24Hour(), self._maxTimeWithoutBreak.getMinute()
+        )
 
     def getMaxGuardsOnBreak(self):
         return self._maxGuardsOnBreak
@@ -143,20 +147,26 @@ class Pool:
 
     def isPoolOpen(self, currentTime):
         if isinstance(currentTime, Time):
-            return (self._poolOpen.getMinutes() <= currentTime.getMinutes() and
-                    self._poolClose.getMinutes() > currentTime.getMinutes())
+            return (
+                self._poolOpen.getMinutes() <= currentTime.getMinutes()
+                and self._poolClose.getMinutes() > currentTime.getMinutes()
+            )
         return False
 
     def isUpperPoolOpen(self, currentTime):
         if isinstance(currentTime, Time):
-            return (self._upperPoolClose.getMinutes() <= currentTime.getMinutes() and
-                    self._upperPoolClose.getMinutes() > currentTime.getMinutes())
+            return (
+                self._upperPoolClose.getMinutes() <= currentTime.getMinutes()
+                and self._upperPoolClose.getMinutes() > currentTime.getMinutes()
+            )
         return False
 
     def isLowerPoolOpen(self, currentTime):
         if isinstance(currentTime, Time):
-            return (self._lowerPoolOpen.getMinutes() <= currentTime.getMinutes() and
-                    self._lowerPoolClose.getMinutes() > currentTime.getMinutes())
+            return (
+                self._lowerPoolOpen.getMinutes() <= currentTime.getMinutes()
+                and self._lowerPoolClose.getMinutes() > currentTime.getMinutes()
+            )
         return False
 
     # Setters
@@ -315,22 +325,24 @@ class Pool:
             self.setLowerPoolClose(Time().setTimeWithMinutes(maximum))
         return self
 
-    def setPool(self,
-                poolOpen=None,
-                poolClose=None,
-                upperPoolOpen=None,
-                upperPoolClose=None,
-                lowerPoolOpen=None,
-                lowerPoolClose=None,
-                defaultUpperPoolStands=None,
-                defaultLowerPoolStands=None,
-                breakLength=None,
-                timePerStand=None,
-                maxTimeWithoutBreak=None,
-                maxGuardsOnBreak=2,
-                lifeguards=None,
-                diveTestTime=None,
-                swimTestTime=None):
+    def setPool(
+        self,
+        poolOpen=None,
+        poolClose=None,
+        upperPoolOpen=None,
+        upperPoolClose=None,
+        lowerPoolOpen=None,
+        lowerPoolClose=None,
+        defaultUpperPoolStands=None,
+        defaultLowerPoolStands=None,
+        breakLength=None,
+        timePerStand=None,
+        maxTimeWithoutBreak=None,
+        maxGuardsOnBreak=2,
+        lifeguards=None,
+        diveTestTime=None,
+        swimTestTime=None,
+    ):
         self.setPoolOpen(poolOpen)
         self.setPoolClose(poolClose)
         self.setUpperPoolOpen(upperPoolOpen)
@@ -351,25 +363,33 @@ class Pool:
     # Generators/Advanced functions
     def generateBreaks(self):
         for lifeguard in self._lifeguards:
-
             # Checks how many breaks will be needed for the guard
-            breaks = math.ceil((lifeguard.getShiftLength().getMinutes() -
-                                self.getMaxTimeWithoutBreak().getMinutes())
-                               / (self.getMaxTimeWithoutBreak().getMinutes() +
-                                  self.getBreakLength() * self.getTimePerStand().getMinutes()))
+            breaks = math.ceil(
+                (
+                    lifeguard.getShiftLength().getMinutes()
+                    - self.getMaxTimeWithoutBreak().getMinutes()
+                )
+                / (
+                    self.getMaxTimeWithoutBreak().getMinutes()
+                    + self.getBreakLength() * self.getTimePerStand().getMinutes()
+                )
+            )
 
             # Store eligible times for each lifeguard
             if breaks == 1:
                 eligibleTimes = []
                 time = lifeguard.getShiftStart()
                 while time.getMinutes() < lifeguard.getShiftEnd().getMinutes():
-                    if (lifeguard.getTimeIntoShift(time).getMinutes() <=
-                            self._maxTimeWithoutBreak.getMinutes() and
-                            lifeguard.getTimeLeftShift(
-                                time.getTime().addMinutes(
-                                    self._breakLength * self.getTimePerStand().getMinutes())
-                            ).getMinutes() <=
-                            self._maxTimeWithoutBreak.getMinutes()):
+                    if (
+                        lifeguard.getTimeIntoShift(time).getMinutes()
+                        <= self._maxTimeWithoutBreak.getMinutes()
+                        and lifeguard.getTimeLeftShift(
+                            time.getTime().addMinutes(
+                                self._breakLength * self.getTimePerStand().getMinutes()
+                            )
+                        ).getMinutes()
+                        <= self._maxTimeWithoutBreak.getMinutes()
+                    ):
                         eligibleTimes.append(time.getTime())
                     time.addTime(self.getTimePerStand())
 
@@ -378,8 +398,14 @@ class Pool:
                 for time in eligibleTimes:
                     breakTimes = []
                     for i in range(0, self._breakLength):
-                        breakTimes.append(self.getGuardsWorking(Time().setTimeWithMinutes(
-                            time.getMinutes() + i * self.getTimePerStand().getMinutes())))
+                        breakTimes.append(
+                            self.getGuardsWorking(
+                                Time().setTimeWithMinutes(
+                                    time.getMinutes()
+                                    + i * self.getTimePerStand().getMinutes()
+                                )
+                            )
+                        )
                     guardsWorking.append(breakTimes)
 
                 # Get the best time for each guard
@@ -399,23 +425,27 @@ class Pool:
 
                 # Set the best time for the guard
                 lifeguard.setBreakStart(eligibleTimes[index].getTime())
-                lifeguard.setBreakEnd(eligibleTimes[index].getTime().addMinutes(
-                    self.getBreakLength() * self.getTimePerStand().getMinutes()))
+                lifeguard.setBreakEnd(
+                    eligibleTimes[index]
+                    .getTime()
+                    .addMinutes(
+                        self.getBreakLength() * self.getTimePerStand().getMinutes()
+                    )
+                )
 
-                '''
+                """
                 print(breaks)
                 for i in range(0, len(guardsWorking)):
                   print(str(totals[i]) + " " + str(guardsWorking[i]) + " " + 
                   eligibleTimes[i].get24Time())
                 print(str(index) + " " + (eligibleTimes[index].get24Time()))
               print()
-              '''
+              """
         return self
 
     # Generates the rotation schedule
     def generateRotationSchedule(self, schedule):
         if isinstance(schedule, Schedule):
-
             # Reset random chances in lifeguards
             for lifeguard in self._lifeguards:
                 lifeguard.setRandomChance(0)
@@ -423,7 +453,6 @@ class Pool:
             # Iterate through each time
             time = self.getPoolOpen()
             while time.getMinutes() < self.getPoolClose().getMinutes():
-
                 # Assign each open stand to a working lifeguard
                 openStands = schedule.getOnlyOpenStands(time)
                 workingLifeguards = self.getWorkingLifeguards(time)
@@ -431,7 +460,6 @@ class Pool:
 
                 # Find out who's on stand
                 for j in range(0, len(openStands)):
-
                     # Find out who has the least amount of stands up
                     standsUp = []
                     for lifeguard in workingLifeguards:
@@ -447,11 +475,17 @@ class Pool:
                     if len(lifeguardsWithLowestStandsUp) > 1:
                         timeUntilOff = []
                         for lifeguard in lifeguardsWithLowestStandsUp:
-                            if (lifeguard.getTimeUntilBreak(time).getMinutes() >
-                                    lifeguard.getTimeLeftShift(time).getMinutes()):
-                                timeUntilOff.append(lifeguard.getTimeLeftShift(time).getMinutes())
+                            if (
+                                lifeguard.getTimeUntilBreak(time).getMinutes()
+                                > lifeguard.getTimeLeftShift(time).getMinutes()
+                            ):
+                                timeUntilOff.append(
+                                    lifeguard.getTimeLeftShift(time).getMinutes()
+                                )
                             else:
-                                timeUntilOff.append(lifeguard.getTimeUntilBreak(time).getMinutes())
+                                timeUntilOff.append(
+                                    lifeguard.getTimeUntilBreak(time).getMinutes()
+                                )
                         minimum = min(timeUntilOff)
                         for i in range(0, len(timeUntilOff)):
                             if timeUntilOff[i] == minimum:
@@ -460,9 +494,9 @@ class Pool:
                                 )
                     elif len(lifeguardsWithLowestStandsUp) == 1:
                         lifeguardsOnStand.append(lifeguardsWithLowestStandsUp[0])
-                        workingLifeguards.pop(workingLifeguards.index(
-                            lifeguardsWithLowestStandsUp[0]
-                        ))
+                        workingLifeguards.pop(
+                            workingLifeguards.index(lifeguardsWithLowestStandsUp[0])
+                        )
 
                     # Find who has the least amount of random chance generations
                     if len(lifeguardsWithLowestTimeUntilOff) > 1:
@@ -481,28 +515,43 @@ class Pool:
                             randomNumber = random.randint(
                                 0, len(lifeguardsWithLowestRandomChance) - 1
                             )
-                            lifeguardsOnStand.append(lifeguardsWithLowestRandomChance[randomNumber])
-                            # If it really does come down to random chance, up the random chance value
-                            if len(openStands) - j < len(lifeguardsWithLowestRandomChance):
-                                lifeguardsWithLowestRandomChance[randomNumber].setRandomChance(
-                                    lifeguardsWithLowestRandomChance[randomNumber].getRandomChance() + 1
-                                )
-                            workingLifeguards.pop(workingLifeguards.index(
+                            lifeguardsOnStand.append(
                                 lifeguardsWithLowestRandomChance[randomNumber]
-                            ))
+                            )
+                            # If it really does come down to random chance, up the random chance value
+                            if len(openStands) - j < len(
+                                lifeguardsWithLowestRandomChance
+                            ):
+                                lifeguardsWithLowestRandomChance[
+                                    randomNumber
+                                ].setRandomChance(
+                                    lifeguardsWithLowestRandomChance[
+                                        randomNumber
+                                    ].getRandomChance()
+                                    + 1
+                                )
+                            workingLifeguards.pop(
+                                workingLifeguards.index(
+                                    lifeguardsWithLowestRandomChance[randomNumber]
+                                )
+                            )
                         # Otherwise, just pick the one in the list
                         elif len(lifeguardsWithLowestRandomChance) == 1:
-                            lifeguardsOnStand.append(lifeguardsWithLowestRandomChance[0])
-                            workingLifeguards.pop(workingLifeguards.index(
+                            lifeguardsOnStand.append(
                                 lifeguardsWithLowestRandomChance[0]
-                            ))
+                            )
+                            workingLifeguards.pop(
+                                workingLifeguards.index(
+                                    lifeguardsWithLowestRandomChance[0]
+                                )
+                            )
                     # If there is only one lifeguard with the lowest time until off,
                     # Assign them the stand
                     elif len(lifeguardsWithLowestTimeUntilOff) == 1:
                         lifeguardsOnStand.append(lifeguardsWithLowestTimeUntilOff[0])
-                        workingLifeguards.pop(workingLifeguards.index(
-                            lifeguardsWithLowestTimeUntilOff[0]
-                        ))
+                        workingLifeguards.pop(
+                            workingLifeguards.index(lifeguardsWithLowestTimeUntilOff[0])
+                        )
 
                 # Generate lifeguards that are down
                 lifeguardsDown = []
@@ -514,7 +563,9 @@ class Pool:
                 previousStands = []
                 for lifeguard in lifeguardsOnStand:
                     previousStands.append(
-                        lifeguard.getStands()[lifeguard.getPriorStandTime(time).getMinutes()]
+                        lifeguard.getStands()[
+                            lifeguard.getPriorStandTime(time).getMinutes()
+                        ]
                     )
                 unAssignedStands = []
                 for stand in openStands:
@@ -527,14 +578,18 @@ class Pool:
                     else:
                         randomNumber = random.randint(0, len(eligibleLifeguards) - 1)
                         eligibleLifeguards[randomNumber].getReferenceStands()[
-                            time.getMinutes()] = stand
-                        index = lifeguardsOnStand.index(eligibleLifeguards[randomNumber])
+                            time.getMinutes()
+                        ] = stand
+                        index = lifeguardsOnStand.index(
+                            eligibleLifeguards[randomNumber]
+                        )
                         lifeguardsOnStand.pop(index)
                         previousStands.pop(index)
                 if len(unAssignedStands) == len(lifeguardsOnStand):
                     for i in range(0, len(unAssignedStands)):
-                        lifeguardsOnStand[i].getReferenceStands()[
-                            time.getMinutes()] = unAssignedStands[i]
+                        lifeguardsOnStand[i].getReferenceStands()[time.getMinutes()] = (
+                            unAssignedStands[i]
+                        )
 
                 # Set down assignments
                 downStands = []
@@ -544,14 +599,20 @@ class Pool:
                     if not assigned:
                         for name, list1 in schedule.getReferenceDownStands()[0].items():
                             for value in list1[1]:
-                                if (not assigned and time.getMinutes() == value.getMinutes() and
-                                        list1[0] > 0):
+                                if (
+                                    not assigned
+                                    and time.getMinutes() == value.getMinutes()
+                                    and list1[0] > 0
+                                ):
                                     downStands.append(name)
                                     list1[0] = list1[0] - 1
                                     assigned = True
                     if not assigned:
                         for i in range(0, len(schedule.getDownStands()[1])):
-                            if schedule.getDownStands()[1][i] not in downStands and not assigned:
+                            if (
+                                schedule.getDownStands()[1][i] not in downStands
+                                and not assigned
+                            ):
                                 downStands.append(schedule.getDownStands()[1][i])
                                 assigned = True
                     if not assigned:
@@ -560,7 +621,9 @@ class Pool:
                     j = j + 1
                 for lifeguard in lifeguardsDown:
                     randomNumber = random.randint(0, len(downStands) - 1)
-                    lifeguard.getReferenceStands()[time.getMinutes()] = downStands[randomNumber]
+                    lifeguard.getReferenceStands()[time.getMinutes()] = downStands[
+                        randomNumber
+                    ]
                     downStands.pop(randomNumber)
 
                 # Add time
@@ -607,11 +670,17 @@ class Pool:
 
     def printLifeguardBreaks(self):
         for lifeguard in self._lifeguards:
-            print("%-2d" % (lifeguard.getNumber()) + " " +
-                  lifeguard.getShiftStart().get12Time() + " - " +
-                  lifeguard.getShiftEnd().get12Time() + " " +
-                  lifeguard.getBreakStart().get12Time() + " - " +
-                  lifeguard.getBreakEnd().get12Time())
+            print(
+                "%-2d" % (lifeguard.getNumber())
+                + " "
+                + lifeguard.getShiftStart().get12Time()
+                + " - "
+                + lifeguard.getShiftEnd().get12Time()
+                + " "
+                + lifeguard.getBreakStart().get12Time()
+                + " - "
+                + lifeguard.getBreakEnd().get12Time()
+            )
         return self
 
     def updateLifeguardsBreaksInStands(self):
@@ -623,8 +692,12 @@ class Pool:
         if isinstance(spacingLength, int):
             line = "%-8s" % ("Number") + "|"
             for lifeguard in self._lifeguards:
-                line = (line + " " * (spacingLength - len(str(lifeguard.getNumber())))
-                        + str(lifeguard.getNumber()) + "|")
+                line = (
+                    line
+                    + " " * (spacingLength - len(str(lifeguard.getNumber())))
+                    + str(lifeguard.getNumber())
+                    + "|"
+                )
             print(line)
             print("--------|" + ("-" * spacingLength + "|") * len(self._lifeguards))
             time = self.getPoolOpen()
@@ -633,9 +706,16 @@ class Pool:
                 line = line + time.get12Time() + "|"
                 for lifeguard in self._lifeguards:
                     if time.getMinutes() in lifeguard.getStands():
-                        line = (line + " " * (
-                                spacingLength - len(lifeguard.getStands()[time.getMinutes()])
-                        ) + lifeguard.getStands()[time.getMinutes()] + "|")
+                        line = (
+                            line
+                            + " "
+                            * (
+                                spacingLength
+                                - len(lifeguard.getStands()[time.getMinutes()])
+                            )
+                            + lifeguard.getStands()[time.getMinutes()]
+                            + "|"
+                        )
                     else:
                         line = line + (" " * spacingLength + "|")
                 print(line)

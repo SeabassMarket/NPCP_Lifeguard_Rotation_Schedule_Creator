@@ -8,30 +8,41 @@ defaultTime = Time(0, 0)
 
 # Creates a lifeguard object to store information and data about a lifeguard
 class Lifeguard:
-
     # Constructs the lifeguard object
-    def __init__(self,
-                 number=-1,
-                 shiftStart=defaultTime,
-                 shiftEnd=defaultTime,
-                 name="unnamed",
-                 stands=None,
-                 breakStart=defaultTime,
-                 breakEnd=defaultTime,
-                 randomChance=0):
-        self.setLifeguard(number,
-                          shiftStart,
-                          shiftEnd,
-                          name,
-                          stands,
-                          breakStart,
-                          breakEnd, randomChance)
+    def __init__(
+        self,
+        number=-1,
+        shiftStart=defaultTime,
+        shiftEnd=defaultTime,
+        name="unnamed",
+        stands=None,
+        breakStart=defaultTime,
+        breakEnd=defaultTime,
+        randomChance=0,
+    ):
+        self.setLifeguard(
+            number,
+            shiftStart,
+            shiftEnd,
+            name,
+            stands,
+            breakStart,
+            breakEnd,
+            randomChance,
+        )
 
     # Getters
 
     def getLifeguard(self):
-        return Lifeguard(self._number, self._shiftStart, self._shiftEnd, self._name,
-                         self._stands, self._breakStart, self._breakEnd)
+        return Lifeguard(
+            self._number,
+            self._shiftStart,
+            self._shiftEnd,
+            self._name,
+            self._stands,
+            self._breakStart,
+            self._breakEnd,
+        )
 
     def getNumber(self):
         return self._number
@@ -74,13 +85,17 @@ class Lifeguard:
 
     def isOnShift(self, currentTime):
         if isinstance(currentTime, Time):
-            return (self._shiftStart.getMinutes() <= currentTime.getMinutes() and
-                    self._shiftEnd.getMinutes() > currentTime.getMinutes())
+            return (
+                self._shiftStart.getMinutes() <= currentTime.getMinutes()
+                and self._shiftEnd.getMinutes() > currentTime.getMinutes()
+            )
 
     def isOnBreak(self, currentTime):
         if isinstance(currentTime, Time):
-            return (self._breakStart.getMinutes() <= currentTime.getMinutes() and
-                    self._breakEnd.getMinutes() > currentTime.getMinutes())
+            return (
+                self._breakStart.getMinutes() <= currentTime.getMinutes()
+                and self._breakEnd.getMinutes() > currentTime.getMinutes()
+            )
 
     def isWorking(self, currentTime):
         if isinstance(currentTime, Time):
@@ -88,29 +103,34 @@ class Lifeguard:
         return False
 
     def getShiftLength(self):
-        return Time().setTimeWithMinutes(self._shiftEnd.getMinutes()
-                                         - self._shiftStart.getMinutes())
+        return Time().setTimeWithMinutes(
+            self._shiftEnd.getMinutes() - self._shiftStart.getMinutes()
+        )
 
     def getBreakLength(self):
-        return Time().setTimeWithMinutes(self._breakEnd.getMinutes()
-                                         - self._breakStart.getMinutes())
+        return Time().setTimeWithMinutes(
+            self._breakEnd.getMinutes() - self._breakStart.getMinutes()
+        )
 
     def getTimeUntilBreak(self, currentTime):
         if isinstance(currentTime, Time):
-            return Time().setTimeWithMinutes(self._breakStart.getMinutes()
-                                             - currentTime.getMinutes())
+            return Time().setTimeWithMinutes(
+                self._breakStart.getMinutes() - currentTime.getMinutes()
+            )
         return Time()
 
     def getTimeIntoShift(self, currentTime):
         if isinstance(currentTime, Time):
-            return Time().setTimeWithMinutes(currentTime.getMinutes()
-                                             - self._shiftStart.getMinutes())
+            return Time().setTimeWithMinutes(
+                currentTime.getMinutes() - self._shiftStart.getMinutes()
+            )
         return Time()
 
     def getTimeLeftShift(self, currentTime):
         if isinstance(currentTime, Time):
-            return Time().setTimeWithMinutes(self._shiftEnd.getMinutes()
-                                             - currentTime.getMinutes())
+            return Time().setTimeWithMinutes(
+                self._shiftEnd.getMinutes() - currentTime.getMinutes()
+            )
         return Time()
 
     def getStandsUp(self, currentTime, schedule):
@@ -121,10 +141,12 @@ class Lifeguard:
             while not done:
                 closestSmallerTime = self.getShiftStart().getMinutes()
                 for key in self._stands:
-                    if (key < time and time - closestSmallerTime > time - key):
+                    if key < time and time - closestSmallerTime > time - key:
                         closestSmallerTime = key
-                if (closestSmallerTime == time or
-                        self._stands[closestSmallerTime] in schedule.getTotalDownStands()):
+                if (
+                    closestSmallerTime == time
+                    or self._stands[closestSmallerTime] in schedule.getTotalDownStands()
+                ):
                     done = True
                 else:
                     time = closestSmallerTime
@@ -135,8 +157,11 @@ class Lifeguard:
         if isinstance(currentTime, Time):
             closestSmallerTime = self.getShiftStart().getMinutes()
             for key in self._stands:
-                if (key < currentTime.getMinutes() and currentTime.getMinutes() -
-                        closestSmallerTime > currentTime.getMinutes() - key):
+                if (
+                    key < currentTime.getMinutes()
+                    and currentTime.getMinutes() - closestSmallerTime
+                    > currentTime.getMinutes() - key
+                ):
                     closestSmallerTime = key
             return Time().setTimeWithMinutes(closestSmallerTime)
         return Time()
@@ -190,15 +215,17 @@ class Lifeguard:
             self._randomChance = randomChance
         return self
 
-    def setLifeguard(self,
-                     number=-1,
-                     shiftStart=defaultTime,
-                     shiftEnd=defaultTime,
-                     name="unnamed",
-                     stands=None,
-                     breakStart=defaultTime,
-                     breakEnd=defaultTime,
-                     randomChance=0):
+    def setLifeguard(
+        self,
+        number=-1,
+        shiftStart=defaultTime,
+        shiftEnd=defaultTime,
+        name="unnamed",
+        stands=None,
+        breakStart=defaultTime,
+        breakEnd=defaultTime,
+        randomChance=0,
+    ):
         if isinstance(number, int):
             self._number = number
         else:

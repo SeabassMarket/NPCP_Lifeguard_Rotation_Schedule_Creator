@@ -1,6 +1,5 @@
 # Creates a time object to make it easier to add and subtract times
 class Time:
-
     # Constructor, builds the time object
     def __init__(self, hour=0, minute=0):
         if isinstance(hour, int) and isinstance(minute, int):
@@ -32,7 +31,11 @@ class Time:
         return "%02d:%02d" % (self._hour, self._minute)
 
     def get12Time(self):
-        return "%02d:%02d %s" % (self.get12Hour()[0], self.getMinute(), self.get12Hour()[1])
+        return "%02d:%02d %s" % (
+            self.get12Hour()[0],
+            self.getMinute(),
+            self.get12Hour()[1],
+        )
 
     # Setters
     def setHour(self, hour):
@@ -59,7 +62,11 @@ class Time:
         return self
 
     def set12Time(self, hour=0, minute=0, amOrPm="AM"):
-        if isinstance(hour, int) and isinstance(minute, int) and isinstance(amOrPm, str):
+        if (
+            isinstance(hour, int)
+            and isinstance(minute, int)
+            and isinstance(amOrPm, str)
+        ):
             addition = 0
             if amOrPm.upper() == "PM" and hour + minute // 60 < 12:
                 addition = 12
@@ -81,7 +88,10 @@ class Time:
 
     def addTime(self, time):
         if isinstance(time, Time):
-            self._hour = (self._hour + time.get24Hour() +
-                          ((self._minute + time.getMinute()) // 60)) % 24
+            self._hour = (
+                self._hour
+                + time.get24Hour()
+                + ((self._minute + time.getMinute()) // 60)
+            ) % 24
             self._minute = (self._minute + time.getMinute()) % 60
         return self

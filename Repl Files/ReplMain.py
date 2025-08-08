@@ -9,13 +9,15 @@ from ReplSchedule import Schedule
 from ReplTime import Time
 
 # Create pool
-pool = (Pool()
-        .setLifeguardsAugust3rd()
-        .autoSetPoolsOpenAndClose()
-        .sortLifeguardsBasedOnShifts()
-        .generateBreaks()
-        .updateLifeguardsBreaksInStands()
-        .sortLifeguardsBasedOnBreaks())
+pool = (
+    Pool()
+    .setLifeguardsAugust3rd()
+    .autoSetPoolsOpenAndClose()
+    .sortLifeguardsBasedOnShifts()
+    .generateBreaks()
+    .updateLifeguardsBreaksInStands()
+    .sortLifeguardsBasedOnBreaks()
+)
 
 # Create schedule
 schedule = Schedule()
@@ -39,16 +41,8 @@ schedule.setStandE(
         [Time(11, 0), Time(20, 0)],
     ]
 )
-schedule.setStandF(
-    [
-
-    ]
-)
-schedule.setStandG(
-    [
-
-    ]
-)
+schedule.setStandF([])
+schedule.setStandG([])
 schedule.setStandH(
     [
         [Time(11, 0), Time(20, 0)],
@@ -59,11 +53,7 @@ schedule.setStandI(
         [Time(12, 0), Time(19, 0)],
     ]
 )
-schedule.setStandJ(
-    [
-
-    ]
-)
+schedule.setStandJ([])
 schedule.setStandK(
     [
         [Time(11, 0), Time(20, 0)],
@@ -79,22 +69,18 @@ schedule.setStandS(
         [Time(13, 0), Time(19, 0)],
     ]
 )
-schedule.setExtraStands(
-    {
-
-    }
-)
+schedule.setExtraStands({})
 schedule.setDownStands(
     [
         {
             "DT": [3, [Time(14, 0)]],
             "ST": [3, [Time(15, 0)]],
             "SU": [6, [Time(10, 40), Time(11, 0)]],
-            "CU": [20, [Time(20, 0), Time(20, 20), Time(20, 40)]]
+            "CU": [20, [Time(20, 0), Time(20, 20), Time(20, 40)]],
         },
         ["O", "X", "P"],
         ["W"],
-        ["Y"]
+        ["Y"],
     ]
 )
 

@@ -4,37 +4,40 @@ from ReplTime import Time
 
 # Creates a class to handle the schedule and displaying it
 class Schedule:
-
     # Construct schedule Object
-    def __init__(self,
-                 standA=None,
-                 standB=None,
-                 standC=None,
-                 standE=None,
-                 standF=None,
-                 standG=None,
-                 standH=None,
-                 standI=None,
-                 standJ=None,
-                 standK=None,
-                 standT=None,
-                 standS=None,
-                 extraStands=None,
-                 downStands=None):
-        self.setSchedule(standA,
-                         standB,
-                         standC,
-                         standE,
-                         standF,
-                         standG,
-                         standH,
-                         standI,
-                         standJ,
-                         standK,
-                         standT,
-                         standS,
-                         extraStands,
-                         downStands)
+    def __init__(
+        self,
+        standA=None,
+        standB=None,
+        standC=None,
+        standE=None,
+        standF=None,
+        standG=None,
+        standH=None,
+        standI=None,
+        standJ=None,
+        standK=None,
+        standT=None,
+        standS=None,
+        extraStands=None,
+        downStands=None,
+    ):
+        self.setSchedule(
+            standA,
+            standB,
+            standC,
+            standE,
+            standF,
+            standG,
+            standH,
+            standI,
+            standJ,
+            standK,
+            standT,
+            standS,
+            extraStands,
+            downStands,
+        )
 
     # Getters
     def getReferenceStandA(self):
@@ -52,8 +55,10 @@ class Schedule:
     def getStandAOpen(self, time):
         open = False
         for list in self._standA:
-            if (time.getMinutes() >= list[0].getMinutes() and
-                    time.getMinutes() < list[1].getMinutes()):
+            if (
+                time.getMinutes() >= list[0].getMinutes()
+                and time.getMinutes() < list[1].getMinutes()
+            ):
                 open = True
         return open
 
@@ -72,8 +77,10 @@ class Schedule:
     def getStandBOpen(self, time):
         open = False
         for list in self._standB:
-            if (time.getMinutes() >= list[0].getMinutes() and
-                    time.getMinutes() < list[1].getMinutes()):
+            if (
+                time.getMinutes() >= list[0].getMinutes()
+                and time.getMinutes() < list[1].getMinutes()
+            ):
                 open = True
         return open
 
@@ -92,8 +99,10 @@ class Schedule:
     def getStandCOpen(self, time):
         open = False
         for list in self._standC:
-            if (time.getMinutes() >= list[0].getMinutes() and
-                    time.getMinutes() < list[1].getMinutes()):
+            if (
+                time.getMinutes() >= list[0].getMinutes()
+                and time.getMinutes() < list[1].getMinutes()
+            ):
                 open = True
         return open
 
@@ -112,8 +121,10 @@ class Schedule:
     def getStandEOpen(self, time):
         open = False
         for list in self._standE:
-            if (time.getMinutes() >= list[0].getMinutes() and
-                    time.getMinutes() < list[1].getMinutes()):
+            if (
+                time.getMinutes() >= list[0].getMinutes()
+                and time.getMinutes() < list[1].getMinutes()
+            ):
                 open = True
         return open
 
@@ -132,8 +143,10 @@ class Schedule:
     def getStandFOpen(self, time):
         open = False
         for list in self._standF:
-            if (time.getMinutes() >= list[0].getMinutes() and
-                    time.getMinutes() < list[1].getMinutes()):
+            if (
+                time.getMinutes() >= list[0].getMinutes()
+                and time.getMinutes() < list[1].getMinutes()
+            ):
                 open = True
         return open
 
@@ -152,8 +165,10 @@ class Schedule:
     def getStandGOpen(self, time):
         open = False
         for list in self._standG:
-            if (time.getMinutes() >= list[0].getMinutes() and
-                    time.getMinutes() < list[1].getMinutes()):
+            if (
+                time.getMinutes() >= list[0].getMinutes()
+                and time.getMinutes() < list[1].getMinutes()
+            ):
                 open = True
         return open
 
@@ -172,8 +187,10 @@ class Schedule:
     def getStandHOpen(self, time):
         open = False
         for list in self._standH:
-            if (time.getMinutes() >= list[0].getMinutes() and
-                    time.getMinutes() < list[1].getMinutes()):
+            if (
+                time.getMinutes() >= list[0].getMinutes()
+                and time.getMinutes() < list[1].getMinutes()
+            ):
                 open = True
         return open
 
@@ -192,8 +209,10 @@ class Schedule:
     def getStandIOpen(self, time):
         open = False
         for list in self._standI:
-            if (time.getMinutes() >= list[0].getMinutes() and
-                    time.getMinutes() < list[1].getMinutes()):
+            if (
+                time.getMinutes() >= list[0].getMinutes()
+                and time.getMinutes() < list[1].getMinutes()
+            ):
                 open = True
         return open
 
@@ -212,8 +231,10 @@ class Schedule:
     def getStandJOpen(self, time):
         open = False
         for list in self._standJ:
-            if (time.getMinutes() >= list[0].getMinutes() and
-                    time.getMinutes() < list[1].getMinutes()):
+            if (
+                time.getMinutes() >= list[0].getMinutes()
+                and time.getMinutes() < list[1].getMinutes()
+            ):
                 open = True
         return open
 
@@ -232,8 +253,10 @@ class Schedule:
     def getStandKOpen(self, time):
         open = False
         for list in self._standK:
-            if (time.getMinutes() >= list[0].getMinutes() and
-                    time.getMinutes() < list[1].getMinutes()):
+            if (
+                time.getMinutes() >= list[0].getMinutes()
+                and time.getMinutes() < list[1].getMinutes()
+            ):
                 open = True
         return open
 
@@ -252,8 +275,10 @@ class Schedule:
     def getStandTOpen(self, time):
         open = False
         for list in self._standT:
-            if (time.getMinutes() >= list[0].getMinutes() and
-                    time.getMinutes() < list[1].getMinutes()):
+            if (
+                time.getMinutes() >= list[0].getMinutes()
+                and time.getMinutes() < list[1].getMinutes()
+            ):
                 open = True
         return open
 
@@ -272,8 +297,10 @@ class Schedule:
     def getStandSOpen(self, time):
         open = False
         for list in self._standS:
-            if (time.getMinutes() >= list[0].getMinutes() and
-                    time.getMinutes() < list[1].getMinutes()):
+            if (
+                time.getMinutes() >= list[0].getMinutes()
+                and time.getMinutes() < list[1].getMinutes()
+            ):
                 open = True
         return open
 
@@ -297,8 +324,10 @@ class Schedule:
         for key in self._extraStands:
             open = False
             for list in self._extraStands[key]:
-                if (time.getMinutes() >= list[0].getMinutes() and
-                        time.getMinutes() < list[1].getMinutes()):
+                if (
+                    time.getMinutes() >= list[0].getMinutes()
+                    and time.getMinutes() < list[1].getMinutes()
+                ):
                     open = True
             dictionary[key] = open
         return dictionary
@@ -670,21 +699,23 @@ class Schedule:
             self._downStands = [{}, [], [], []]
         return self
 
-    def setSchedule(self,
-                    standA=None,
-                    standB=None,
-                    standC=None,
-                    standE=None,
-                    standF=None,
-                    standG=None,
-                    standH=None,
-                    standI=None,
-                    standJ=None,
-                    standK=None,
-                    standT=None,
-                    standS=None,
-                    extraStands=None,
-                    downStands=None):
+    def setSchedule(
+        self,
+        standA=None,
+        standB=None,
+        standC=None,
+        standE=None,
+        standF=None,
+        standG=None,
+        standH=None,
+        standI=None,
+        standJ=None,
+        standK=None,
+        standT=None,
+        standS=None,
+        extraStands=None,
+        downStands=None,
+    ):
         self.setStandA(standA)
         self.setStandB(standB)
         self.setStandC(standC)
