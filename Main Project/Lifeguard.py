@@ -363,6 +363,7 @@ class Lifeguard:
                 return -1
         self._breakTimes.append(givenTime)
         self.updateBreaks()
+        return 0
 
     # Sets the id number of the lifeguard
     def setIdNum(self, num):
@@ -431,3 +432,21 @@ class Lifeguard:
     # Returns how many breaks the lifeguard has
     def getNumBreaks(self):
         return self._numBreaks
+
+    # Resets the lifeguard
+    def resetLifeguardSchedule(self):
+        self._breakTimes = []
+
+        # Reset the schedule dictionary
+        self._schedule = dict()
+        for t in range(
+                self._startTime.getMinutes(),
+                self._endTime.getMinutes(),
+                self._staticAppInfo.getTimeInterval(),
+        ):
+            # Create the time object
+            time = Time().setTimeWithMinutes(t)
+            self._schedule[time] = "EMPTY"
+
+        self.resetRandomChance()
+

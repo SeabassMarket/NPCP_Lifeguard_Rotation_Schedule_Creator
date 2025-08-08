@@ -1217,3 +1217,8 @@ class CalculateSchedule:
             # Print the time
             print(line)
             print("-" * dashLength)
+
+    # Resets the schedule
+    def resetSchedule(self):
+        for lifeguard in self._lifeguards:
+            lifeguard.resetLifeguardSchedule()
