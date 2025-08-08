@@ -380,6 +380,7 @@ class CalculateSchedule:
                     except NameError:
                         messages = [message]
 
+        """
         # Print info
         if len(lifeguardsGoingOnBreak) > 0:
             print(currentTime.get12Time(), end=": ")
@@ -420,8 +421,9 @@ class CalculateSchedule:
         if len(lifeguardsGoingOnBreak) > 0:
             print("END HERE")
             print()
+        """
 
-    # Then returns the best possible permutation of lifeguard combinations
+    # This returns the best possible permutation of lifeguard swaps before a break
     def getBestPossiblePermutationOfLifeguardRearrangements(
         self,
         uniqueLifeguardsThatCanBeSwappedWith,
@@ -688,17 +690,31 @@ class CalculateSchedule:
 
                 """HERE WE CHECK WHO HAS THE MOST AMOUNT OF DOWN STANDS IF THERE ARE MORE LIFEGUARD WITH 0 UP STANDS
                 THAN UP STANDS TO BE ASSIGNED (NEW ALGORITHM #3)"""
-                if tieBreaker:
-                    # Check to see if the lifeguards that have the value 0 for up stand intervals is more than the
-                    # number of iterations left
-                    # We're able to check it this way because we only continue to the tiebreaker if the number of
-                    # lifeguards left is more than the number of iterations left. We just need to check if it is 0
-                    if intervalsUpOnStand[0] == 0:
-                        intervalsDownStand = []
-                        for lifeguard in tempLifeguards:
-                            intervalsDownStand.append(
-                                lifeguard.getIntervalsDownOnStand(currentTime)
-                            )
+                if tieBreaker and intervalsUpOnStand[0] == 0:
+                    # Get list of intervals down on stand
+                    intervalsDownOnStand = []
+                    for lifeguard in tempLifeguards:
+                        intervalsDownOnStand.append(lifeguard.getIntervalsDownOnStand(currentTime))
+
+                    # Check eligibility of the third picking algorithm
+                    tieBreaker = False
+                    maximum = max(intervalsDownOnStand)
+
+                    # Get all the values with the maximum and pop the lifeguards who don't have the maximum
+                    for j in range(len(intervalsDownOnStand) - 1, -1, -1):
+                        if intervalsDownOnStand[j] != maximum:
+                            tempLifeguards.pop(j)
+                            intervalsDownOnStand.pop(j)
+
+                    # Continue to tie-breaker if we're going to need it
+                    if len(intervalsDownOnStand) > numIterations - i:
+                        tieBreaker = True
+
+                    # Set the index
+                    index = intervalsDownOnStand.index(maximum)
+                    lifeguard = tempLifeguards[index]
+                    index = lifeguardsWorkingAtTime.index(lifeguard)
+                    message = "MAX DOWN STANDS USED ON"
 
                 """HERE WE CHECK WHO HAS THE LEAST AMOUNT OF RANDOM CHANCES (ALGORITHM #4)"""
                 # Figure out if we can use the least amount of random chances method if the last one didn't work
@@ -710,7 +726,7 @@ class CalculateSchedule:
                             lifeguard.getRandomChance(currentTime)
                         )
 
-                    # Check eligibility of the second picking algorithm
+                    # Check eligibility of the fourth picking algorithm
                     tieBreaker = False
                     minimum = min(lifeguardRandomChances)
                     # Get all the values with the minimum and pop the lifeguards who don't have the minimum
@@ -749,12 +765,13 @@ class CalculateSchedule:
                 self.printSchedule()
                 print(currentTime.get12Time() + " - " + message + " " + str(lifeguard.getIdNum()), end="")
                 input()
-                print()"""
+                print()
+                """
 
         else:
             print("ERROR IN CALCULATE SCHEDULE - aUSAT")
 
-    # Reorganizes stands so that lifeguards aren't on the same stand or something
+    # Reorganizes stands that lifeguards are on to optimize relieving
     def reorganizeLifeguards(self):
         pass
 
@@ -1149,7 +1166,7 @@ class CalculateSchedule:
         # Establish space length
         spaceLength = 4
 
-        # Print the first two line
+        # Print the first two lines
         line = ""
         # Header
         line += "Schedule" + "|"
@@ -1160,9 +1177,11 @@ class CalculateSchedule:
                 + str(lifeguard.getIdNum())
                 + "|"
             )
-        # Print the line and then the line of dashes
+
+        # Print the line and then the line of dashes'
+        dashLength = len(line)
         print(line)
-        print("-" * len(line))
+        print("-" * dashLength)
 
         # Get the time range
         timeRange = self.calculatePoolOpenTimeRange()
@@ -1188,11 +1207,11 @@ class CalculateSchedule:
             for lifeguard in self._lifeguards:
                 stand = lifeguard.getStand(currentTime)
                 if stand == "BREAK":
-                    stand = "YYY"
+                    stand = "\033[93m YYY\033[0m"
                 if stand == "EMPTY":
-                    stand = "NA"
+                    stand = "\033[91m  NA\033[0m"
                 line += (spaceLength - len(stand)) * " " + stand + "|"
 
             # Print the time
             print(line)
-            print("-" * len(line))
+            print("-" * dashLength)

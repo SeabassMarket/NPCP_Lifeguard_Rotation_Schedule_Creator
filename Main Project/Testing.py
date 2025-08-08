@@ -80,10 +80,6 @@ calculator.assignBreaks()
 calculator.calculateSchedule()
 calculator.printSchedule()
 
-lifeguard = calculator.getLifeguards()[16]
-for time in lifeguard.getSchedule():
-    print(time.get12Time(), ":", lifeguard.getIntervalsDownOnStand(time))
-
 """TEST CODE FOR RECURSIVE FUNCTIONS
 values = [
     [4, 8, 1, 3],
