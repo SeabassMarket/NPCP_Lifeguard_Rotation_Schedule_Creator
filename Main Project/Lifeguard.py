@@ -192,6 +192,7 @@ class Lifeguard:
                     0
                 ].keys()
             )
+            upStands.append(self._staticAppInfo.getUpStandCode())
 
             # Count how many stands in the current schedule prior to the given time are up stands
             count = 0
@@ -463,6 +464,7 @@ class Lifeguard:
             return -1  # error code
 
         upStandNames = Stand.getStandNames(upStands)
+        upStandNames.append(self._staticAppInfo.getUpStandCode())
 
         count = 0
         while stand is not None and stand in upStandNames:
@@ -483,3 +485,11 @@ class Lifeguard:
         for scheduleTime in self._schedule:
             if self._schedule[scheduleTime] in upStandNames:
                 self._schedule[scheduleTime] = self._staticAppInfo.getUpStandCode()
+
+    def getIsUpOnStand(self, givenTime: Time, upStands: list[Stand]) -> bool:
+        stand = self.getStand(givenTime)
+
+        upStandNames = Stand.getStandNames(upStands)
+        upStandNames.append(self._staticAppInfo.getUpStandCode())
+
+        return stand in upStandNames

@@ -1,5 +1,6 @@
 # import libraries
 from CalculateSchedule import CalculateSchedule
+from Stand import Stand
 from StaticAppInfo import StaticAppInfo
 from Time import Time
 import time
@@ -76,16 +77,51 @@ staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
 
 """END OF HARDCODING, BEGINNING OF DEVELOPING ALGORITHM"""
 
-calculator = CalculateSchedule(staticAppInfo=staticAppInfo)
-
 
 def calculateSchedule():
-    calculator.resetSchedule()
-    calculator.assignBreaks()
-    calculator.calculateSchedule()
+    calc = CalculateSchedule(staticAppInfo=staticAppInfo)
+    calc.resetSchedule()
+    calc.assignBreaks()
+    calc.calculateSchedule()
+    return calc
 
 
-calculateSchedule()
+def checkScheduleForDoubles(calc: CalculateSchedule):
+    found = False
+
+    calcLifeguards = calc.getLifeguards()
+
+    upStandNames = calc.getUpStandNames()
+
+    for lifeguard in calcLifeguards:
+        stands = list(lifeguard.getSchedule().values())
+
+        for i in range(1, len(stands)):
+            lastStand = stands[i - 1]
+            thisStand = stands[i]
+
+            if thisStand in upStandNames and lastStand == thisStand:
+                found = True
+
+                lastTime = list(lifeguard.getSchedule().keys())[i - 1]
+
+                print(
+                    f"{lifeguard.getIdNum()} has double stands {lastStand} and {thisStand} at {lastTime.get12Time()}"
+                )
+
+    return found
+
+
+for i in range(100):
+    myCalc = calculateSchedule()
+
+    if checkScheduleForDoubles(myCalc):
+        myCalc.printSchedule()
+        print(f"Calculation number {i}")
+        print()
+
+
+calculator = calculateSchedule()
 calculator.printSchedule()
 
 """

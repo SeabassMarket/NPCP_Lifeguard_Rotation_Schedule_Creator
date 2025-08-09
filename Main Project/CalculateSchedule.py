@@ -7,6 +7,11 @@ from Time import Time
 import time
 
 
+# Helper class to raise errors
+class CalculaterException(Exception):
+    pass
+
+
 # This object will be used to calculate and organize different data
 class CalculateSchedule:
     # Initialize object
@@ -92,6 +97,13 @@ class CalculateSchedule:
         # Initialize the breaks instance variable
         self._breaks = []
 
+    # Returns up stand names
+    def getUpStandNames(self):
+        upStandNames = Stand.getStandNames(self._upStands)
+        upStandNames.append(self._staticAppInfo.getUpStandCode())
+
+        return upStandNames
+
     # Calculate the schedule itself by creating each schedule for each lifeguard
     def calculateSchedule(self):
         # Get the time range of when the pool is open
@@ -111,6 +123,21 @@ class CalculateSchedule:
             # Assign the up stands for the lifeguards
             self.assignUpStandsAtTime(currentTime)
 
+            # Swap stands in case someone is starting a break next to optimize stand up intervals
+            self.optimizeUpcomingBreaks(currentTime)
+
+        # Reorganize the lifeguard stands to fix circular issues, duplicates, and make it pretty
+        self.reorganizeLifeguards()
+
+        # For each time between the earliest time and the latest time (excluding latest)
+        for t in range(
+            earliestTime.getMinutes(),
+            latestTime.getMinutes(),
+            self._staticAppInfo.getTimeInterval(),
+        ):
+            # Create a time object for this iteration/current time being observed
+            currentTime = Time().setTimeWithMinutes(t)
+
             # Assign the timely down stands
             self.assignTimelyDownStandsAtTime(currentTime)
 
@@ -119,12 +146,6 @@ class CalculateSchedule:
 
             # Assign the fill-in down stands
             self.assignFillInDownStandsAtTime(currentTime)
-
-            # Swap stands in case someone is starting a break next to optimize stand up intervals
-            self.optimizeUpcomingBreaks(currentTime)
-
-        # Reorganize the lifeguard stands to fix circular issues, duplicates, and make it pretty
-        self.reorganizeLifeguards()
 
     # Optimizes the stands so that the lifeguard going on break has the most up stand intervals
     def optimizeUpcomingBreaks(self, currentTime):
@@ -571,31 +592,16 @@ class CalculateSchedule:
         return options
 
     # Assigns the fill-in down stands to lifeguards at a given time
-    def assignFillInDownStandsAtTime(self, currentTime):
-        # Continue if time is actually a time
-        if isinstance(currentTime, Time):
-            self._staticAppInfo.getTimeInterval()
-            pass
-        else:
-            print("ERROR IN CALCULATE SCHEDULE - aFIDSAT")
+    def assignFillInDownStandsAtTime(self, currentTime: Time):
+        pass
 
     # Assigns the priority down stands to lifeguards at a given time
-    def assignPriorityDownStandsAtTime(self, currentTime):
-        # Continue if time is actually a time
-        if isinstance(currentTime, Time):
-            self._staticAppInfo.getTimeInterval()
-            pass
-        else:
-            print("ERROR IN CALCULATE SCHEDULE - aPDSAT")
+    def assignPriorityDownStandsAtTime(self, currentTime: Time):
+        pass
 
     # Assigns the timely down stands to lifeguards at a given time
-    def assignTimelyDownStandsAtTime(self, currentTime):
-        # Continue if time is actually a time
-        if isinstance(currentTime, Time):
-            self._staticAppInfo.getTimeInterval()
-            pass
-        else:
-            print("ERROR IN CALCULATE SCHEDULE - aTDSAT")
+    def assignTimelyDownStandsAtTime(self, currentTime: Time):
+        pass
 
     # Assigns the up stands to lifeguards at a given time
     def assignUpStandsAtTime(self, currentTime):
@@ -782,9 +788,7 @@ class CalculateSchedule:
 
         earliestTime, latestTime = self.calculatePoolOpenTimeRange()
 
-        self.printSchedule()
-        print()
-
+        # Store the up stands found in the schedule
         timeToUpStandChoices = {}
         for t in range(
             earliestTime.getMinutes(),
@@ -797,19 +801,25 @@ class CalculateSchedule:
                 self.getStandsAtTimeFromLifeguardSchedules(currentTime, self._upStands)
             )
 
+        # Reset each lifeguard so each up stand is just the up stand code
         for lifeguard in self._lifeguards:
             lifeguard.convertScheduleToUp(self._upStands)
 
-        self.printSchedule()
-        print()
+        # Reorganize for each time of day
+        for i in range(0, len(timeToUpStandChoices)):
+            """
+            For each time in the day, reorganize the lifeguards according to the pretty + backup algorithms.
+            
+            The pretty algorithm is to make an effort for lifeguard to follow patterns (e.g. T -> S, A -> B, J -> K)
+            
+            The backup algorithm is to cover the holes left behind by the pretty algorithm to follow these rules:
+                1. No consecutive, identical up stands (e.g. E -> E, J -> J)
+                2. No circular rotations (e.g. A -> B, B -> C, C -> A; in this situation everyone relieves each other)
+            """
+            self.addStandCombos()  # Pretty
+            self.reorganizeLifeguardsAtTime(timeToUpStandChoices, i)  # Backup
 
-        for t in range(
-            earliestTime.getMinutes(),
-            latestTime.getMinutes(),
-            self._staticAppInfo.getTimeInterval(),
-        ):
-            currentTime = Time().setTimeWithMinutes(t)
-
+        """TESTING"""
         currentTime = Time(12, 0)
         lifeguardsUpOnStand = self.getLifeguardsUpOnStandAtSpecificTime(currentTime)
         lifeguardsGoingFromDownToUp = self.getLifeguardsComingFromDownAtTime(
@@ -818,19 +828,169 @@ class CalculateSchedule:
 
         lifeguardToBlockLength = {}
         for lifeguard in lifeguardsGoingFromDownToUp:
-            blockLength = lifeguard.getUpStandsFromTime(
-                currentTime, [self._staticAppInfo.getUpStandCode()]
-            )
+            blockLength = lifeguard.getUpStandsFromTime(currentTime, self._upStands)
 
             lifeguardToBlockLength[lifeguard] = blockLength
 
         for lifeguard in lifeguardToBlockLength:
             blockLength = lifeguardToBlockLength[lifeguard]
+        """TESTING"""
+
+    def addStandCombos(self):
+        pass
+
+    def reorganizeLifeguardsAtTime(
+        self, timeToUpStandChoices: dict[Time, list[str]], index: int
+    ):
+        # Checks
+
+        if not 0 < index < len(timeToUpStandChoices):
+            return
+
+        currentStandChoices = list(timeToUpStandChoices.values())[index]
+        if len(currentStandChoices) < 1:
+            return
+
+        # Get needed lists / groups
+        """
+        We need three main groups. They are:
+        1. Lifeguards going up twice in a row. These are problematic because this is where the issues actually occur
+        2. Lifeguards coming from a down to up. These lifeguards ensure that an outside source is a part of the
+        rotation. If all people in a rotation are up on stand, who starts it? (Answer - nobody. That's bad)
+        """
+
+        currentTime = list(timeToUpStandChoices.keys())[index]
+        currentLifeguardsUp = self.getLifeguardsUpOnStandAtSpecificTime(currentTime)
+        currentLifeguardsDown = self.getLifeguardsDownOnStandAtASpecificTime(
+            currentTime
+        )
+
+        lastTime = list(timeToUpStandChoices.keys())[index - 1]
+        lastLifeguardsUp = self.getLifeguardsUpOnStandAtSpecificTime(lastTime)
+
+        upTwiceCode = "2^"
+        lifeguardsUpTwice = []
+        for lifeguard in currentLifeguardsUp:
+            if lifeguard in lastLifeguardsUp:
+                lifeguardsUpTwice.append(lifeguard)
+
+        downToUpCode = "_ -> ^"
+        downToUpLifeguards = self.getLifeguardsComingFromDownAtTime(
+            currentLifeguardsUp, currentTime
+        )
+
+        # Create clusters
+        """
+        The clusters follow the roles describes for the 3 lifeguard groups described above.
+        
+        The amount of clusters is dependent on the number of down to up lifeguards (significance explain above).
+        """
+
+        clusters: list[dict[str, list[Lifeguard]]] = []
+        clustersLength = len(downToUpLifeguards)
+
+        if clustersLength < 1:
+            raise CalculaterException("reorganizing: no lifeguards going down to up")
+
+        self.distributeValues(clusters, clustersLength, upTwiceCode, lifeguardsUpTwice)
+        self.distributeValues(
+            clusters, clustersLength, downToUpCode, downToUpLifeguards
+        )
+
+        # Analyze clusters and reorganize stands
+        """
+        To reorganize the stands, we make an effort to pair up a stand with itself, then fill the other holes.
+        After that, we just shift all the stands down one slot. This combination solves both main problems.
+        """
+
+        doubleStands = []
+        for lifeguard in lifeguardsUpTwice:
+            stand = lifeguard.getStand(lastTime)
+
+            if stand in currentStandChoices:
+                doubleStands.append(stand)
+
+        freshStands = []
+        for stand in currentStandChoices:
+            if stand not in doubleStands:
+                freshStands.append(stand)
+
+        pass
+
+        for cluster in clusters:
+            downToUpLifeguard = cluster.get(downToUpCode)[0]
+
+            upTwiceLifeguards = cluster.get(upTwiceCode, [])
+
+            allLifeguards = [downToUpLifeguard] + upTwiceLifeguards
+
+            newStandAssignments = [freshStands.pop(random.randrange(len(freshStands)))]
+
+            for lifeguard in upTwiceLifeguards:
+                previousStand = lifeguard.getStand(lastTime)
+
+                if previousStand in doubleStands:
+                    stand = previousStand
+                else:
+                    stand = freshStands.pop(random.randrange(len(freshStands)))
+
+                newStandAssignments.append(stand)
+
+            shifted = [newStandAssignments[-1]] + newStandAssignments[:-1]
+
+            for i in range(len(allLifeguards)):
+                lifeguard = allLifeguards[i]
+
+                stand = shifted[i]
+
+                lifeguard.addStand(currentTime, stand)
+
+        pass
+
+    @staticmethod
+    def distributeValues(
+        clusters: list[dict[str, list[Lifeguard]]], length: int, code: str, values: list
+    ):
+        if len(clusters) < 1:
+            for i in range(length):
+                clusters.append({})
+
+        index = 0
+        values = list(values)
+        while len(values) > 0:
+            cluster = clusters[index]
+
+            value = values.pop(0)
+
+            clusterList = cluster.get(code)
+
+            if clusterList is None:
+                cluster[code] = [value]
+            else:
+                cluster[code].append(value)
+
+            index += 1
+            if index >= len(clusters):
+                index = 0
+
+    def getLifeguardsComingFromUpAtTime(
+        self, lifeguards: list[Lifeguard], currentTime: Time
+    ) -> list[Lifeguard]:
+        lifeguardsComingFromUp = []
+
+        lastTime = Time().setTimeWithMinutes(
+            currentTime.getMinutes() - self._staticAppInfo.getTimeInterval()
+        )
+        for lifeguard in lifeguards:
+            if lifeguard.getIsUpOnStand(lastTime, self._upStands):
+                lifeguardsComingFromUp.append(lifeguard)
+
+        return lifeguardsComingFromUp
 
     @staticmethod
     def getLifeguardsComingFromDownAtTime(
         lifeguards: list[Lifeguard], currentTime: Time
-    ):
+    ) -> list[Lifeguard]:
         lifeguardsComingFromDown = []
 
         for lifeguard in lifeguards:
@@ -858,9 +1018,8 @@ class CalculateSchedule:
         # Check type of currentTime
         if isinstance(currentTime, Time):
             lifeguardsWorking = self.getLifeguardsWorkingAtASpecificTime(currentTime)
-            upStands = []
-            for stand in self._upStands:
-                upStands.append(stand.getName())
+            upStands = Stand.getStandNames(self._upStands)
+            upStands.append(self._staticAppInfo.getUpStandCode())
             for i in range(len(lifeguardsWorking) - 1, -1, -1):
                 if lifeguardsWorking[i].getStand(currentTime) not in upStands:
                     lifeguardsWorking.pop(i)
@@ -868,6 +1027,18 @@ class CalculateSchedule:
         else:
             print("ERROR IN CALCULATE SCHEDULE - gLUOSAST")
             return []
+
+    def getLifeguardsDownOnStandAtASpecificTime(self, currentTime: Time):
+        lifeguardsWorking = self.getLifeguardsWorkingAtASpecificTime(currentTime)
+
+        upStands = Stand.getStandNames(self._upStands)
+        upStands.append(self._staticAppInfo.getUpStandCode())
+
+        for i in range(len(lifeguardsWorking) - 1, -1, -1):
+            if lifeguardsWorking[i].getStand(currentTime) in upStands:
+                lifeguardsWorking.pop(i)
+
+        return lifeguardsWorking
 
     # Returns a list with the stands that are open at that time (works for both up stands and downs stands)
     @staticmethod
