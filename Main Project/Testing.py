@@ -2,6 +2,7 @@
 from CalculateSchedule import CalculateSchedule
 from StaticAppInfo import StaticAppInfo
 from Time import Time
+import time
 import tkinter as tk
 
 """THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION   """
@@ -76,11 +77,33 @@ staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
 """END OF HARDCODING, BEGINNING OF DEVELOPING ALGORITHM"""
 
 calculator = CalculateSchedule(staticAppInfo=staticAppInfo)
-calculator.assignBreaks()
-calculator.calculateSchedule()
+
+
+def calculateSchedule():
+    calculator.resetSchedule()
+    calculator.assignBreaks()
+    calculator.calculateSchedule()
+
+
+calculateSchedule()
 calculator.printSchedule()
 
-"""TEST CODE FOR RECURSIVE FUNCTIONS
+"""
+count = 0
+start = time.time()
+print("starting calculation")
+while count < 1:
+    calculateSchedule()
+    count += 1
+print(time.time() - start)
+
+calculator.printSchedule()
+
+print(f"\n{count}")
+"""
+
+"""
+TEST CODE FOR RECURSIVE FUNCTIONS
 values = [
     [4, 8, 1, 3],
     [9, 1, 4, 2],
@@ -114,4 +137,5 @@ for n in range(0, len(optionsList)):
 print(result1)
 print(staticAppInfo.getCount())
 
-print(len(optionsList), "possible permutations generated")"""
+print(len(optionsList), "possible permutations generated")
+"""

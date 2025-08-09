@@ -1,6 +1,8 @@
 # import libraries
 import math
 from Time import Time
+import time
+from Stand import Stand
 from StaticAppInfo import StaticAppInfo
 
 
@@ -68,8 +70,8 @@ class Lifeguard:
             self._staticAppInfo.getTimeInterval(),
         ):
             # Create the time object
-            time = Time().setTimeWithMinutes(t)
-            self._schedule[time] = "EMPTY"
+            thisTime = Time().setTimeWithMinutes(t)
+            self._schedule[thisTime] = "EMPTY"
         self.updateBreaks()
 
         # Initialize random chance selections to 0
@@ -124,13 +126,13 @@ class Lifeguard:
         ):
             timeBeingAnalyzed = Time().setTimeWithMinutes(t)
             otherTime = Time()
-            for time in otherRandomChance:
-                if time.equals(timeBeingAnalyzed):
-                    otherTime = time
+            for thisTime in otherRandomChance:
+                if thisTime.equals(timeBeingAnalyzed):
+                    otherTime = thisTime
             thisTime = Time()
-            for time in self._randomChance:
-                if time.equals(timeBeingAnalyzed):
-                    thisTime = time
+            for thisTime in self._randomChance:
+                if thisTime.equals(timeBeingAnalyzed):
+                    thisTime = thisTime
             tempRandomChanceValue = otherRandomChance[otherTime]
             otherRandomChance[otherTime] = self._randomChance[thisTime]
             self._randomChance[thisTime] = tempRandomChanceValue
@@ -141,9 +143,9 @@ class Lifeguard:
 
     # Adds one to random chance
     def incrementRandomChance(self, currentTime):
-        for time in self._randomChance:
-            if time.equals(currentTime):
-                self._randomChance[time] = 1
+        for thisTime in self._randomChance:
+            if thisTime.equals(currentTime):
+                self._randomChance[thisTime] = 1
 
     # Resets the random chance
     def resetRandomChance(self):
@@ -153,32 +155,32 @@ class Lifeguard:
             self._endTime.getMinutes(),
             self._staticAppInfo.getTimeInterval(),
         ):
-            time = Time().setTimeWithMinutes(t)
-            self._randomChance[time] = 0
+            thisTime = Time().setTimeWithMinutes(t)
+            self._randomChance[thisTime] = 0
 
     # Returns the random chance
     def getRandomChance(self, currentTime):
         count = 0
         if isinstance(currentTime, Time):
-            for time in self._randomChance:
-                if time.getMinutes() < currentTime.getMinutes():
-                    count += self._randomChance[time]
+            for thisTime in self._randomChance:
+                if thisTime.getMinutes() < currentTime.getMinutes():
+                    count += self._randomChance[thisTime]
         else:
             print("ERROR IN LIFEGUARD - gRC")
         return count
 
     # Returns how long the lifeguard has been up on stand given the time
-    def getIntervalsUpOnStand(self, time):
+    def getIntervalsUpOnStand(self, thisTime):
         # Check the type of the parameter
-        if isinstance(time, Time):
+        if isinstance(thisTime, Time):
             # Get the index of the time given in self._schedule keys
             index = None
             scheduleTimes = list(self._schedule.keys())
-            if time.equals(self._endTime):
+            if thisTime.equals(self._endTime):
                 index = len(scheduleTimes)
             else:
                 for i in range(0, len(scheduleTimes)):
-                    if scheduleTimes[i].equals(time):
+                    if scheduleTimes[i].equals(thisTime):
                         index = i
             # If the index is not assigned then the time given is invalid
             if index is None:
@@ -208,17 +210,17 @@ class Lifeguard:
         return -1
 
     # Returns how many intervals the lifeguard has been down on stand for a certain time
-    def getIntervalsDownOnStand(self, time):
+    def getIntervalsDownOnStand(self, thisTime):
         # Check the type of the parameter
-        if isinstance(time, Time):
+        if isinstance(thisTime, Time):
             # Get the index of the time given in self._schedule keys
             index = None
             scheduleTimes = list(self._schedule.keys())
-            if time.equals(self._endTime):
+            if thisTime.equals(self._endTime):
                 index = len(scheduleTimes)
             else:
                 for i in range(0, len(scheduleTimes)):
-                    if scheduleTimes[i].equals(time):
+                    if scheduleTimes[i].equals(thisTime):
                         index = i
             # If the index is not assigned then the time given is invalid
             if index is None:
@@ -274,14 +276,16 @@ class Lifeguard:
         ):
             # Get the keys for the two dictionaries
             timeBeingAnalyzed = Time().setTimeWithMinutes(t)
+
             otherTime = Time()
-            for time in otherScheduleDictionary:
-                if time.equals(timeBeingAnalyzed):
-                    otherTime = time
+            for scheduleTime in otherScheduleDictionary:
+                if scheduleTime.equals(timeBeingAnalyzed):
+                    otherTime = scheduleTime
+
             thisTime = Time()
-            for time in self._schedule:
-                if time.equals(timeBeingAnalyzed):
-                    thisTime = time
+            for scheduleTime in self._schedule:
+                if scheduleTime.equals(timeBeingAnalyzed):
+                    thisTime = scheduleTime
 
             # Swap the values
             tempStandValue = otherScheduleDictionary[otherTime]
@@ -317,20 +321,20 @@ class Lifeguard:
         return self._schedule
 
     # Returns the stand at a certain time
-    def getStand(self, time):
-        if isinstance(time, Time):
+    def getStand(self, thisTime) -> str | None:
+        if isinstance(thisTime, Time):
             for scheduleTime in self._schedule:
-                if scheduleTime.equals(time):
+                if scheduleTime.equals(thisTime):
                     return self._schedule[scheduleTime]
         else:
             print("ERROR IN LIFEGUARD - GET STAND")
-        return ""
+        return None
 
     # Adds a stand to the lifeguard's schedule at a certain time
-    def addStand(self, time, standName):
-        if isinstance(time, Time) and isinstance(standName, str):
+    def addStand(self, thisTime, standName):
+        if isinstance(thisTime, Time) and isinstance(standName, str):
             for scheduleTime in self._schedule:
-                if scheduleTime.equals(time):
+                if scheduleTime.equals(thisTime):
                     self._schedule[scheduleTime] = standName
                     return scheduleTime
             print("ERROR IN LIFEGUARD - ADD STAND TIME NOT FOUND")
@@ -347,12 +351,14 @@ class Lifeguard:
         # Add in the break times
         for breakTime in self._breakTimes:
             for i in range(0, self._staticAppInfo.getBreakInterval()):
-                time = Time().setTimeWithMinutes(
+                thisTime = Time().setTimeWithMinutes(
                     breakTime.getMinutes() + i * self._staticAppInfo.getTimeInterval()
                 )
                 for scheduleTime in self._schedule:
-                    if scheduleTime.equals(time):
-                        self._schedule[scheduleTime] = "BREAK"
+                    if scheduleTime.equals(thisTime):
+                        self._schedule[scheduleTime] = (
+                            self._staticAppInfo.getBreakCode()
+                        )
 
     # Adds a break to the list
     # NOTE: Breaks must be assigned in increasing order
@@ -401,31 +407,31 @@ class Lifeguard:
         return [earliestTime, latestTime]
 
     # Returns whether the lifeguard is working during that time
-    def isWorking(self, time):
-        if not isinstance(time, Time):
+    def isWorking(self, thisTime):
+        if not isinstance(thisTime, Time):
             return False
-        if self.isOnBreak(time):
+        if self.isOnBreak(thisTime):
             return False
-        return time.getIsInBetweenExclusiveEnd(self._startTime, self._endTime)
+        return thisTime.getIsInBetweenExclusiveEnd(self._startTime, self._endTime)
 
     # Returns whether the lifeguard is on break at the given time
     def isOnBreak(self, givenTime):
         if not isinstance(givenTime, Time):
             return False
-        for time in self._breakTimes:
+        for thisTime in self._breakTimes:
             if givenTime.getIsInBetweenExclusiveEnd(
-                time,
+                thisTime,
                 Time().setTimeWithMinutes(
-                    time.getMinutes() + self._staticAppInfo.getBreakTime()
+                    thisTime.getMinutes() + self._staticAppInfo.getBreakTime()
                 ),
             ):
                 return True
         return False
 
     # Returns whether the lifeguard is on shift or not
-    def isOnShift(self, time):
-        if isinstance(time, Time):
-            return time.getIsInBetweenExclusiveEnd(self._startTime, self._endTime)
+    def isOnShift(self, thisTime):
+        if isinstance(thisTime, Time):
+            return thisTime.getIsInBetweenExclusiveEnd(self._startTime, self._endTime)
         print("ERROR IN LIFEGUARD - isOnShift")
         return False
 
@@ -440,13 +446,40 @@ class Lifeguard:
         # Reset the schedule dictionary
         self._schedule = dict()
         for t in range(
-                self._startTime.getMinutes(),
-                self._endTime.getMinutes(),
-                self._staticAppInfo.getTimeInterval(),
+            self._startTime.getMinutes(),
+            self._endTime.getMinutes(),
+            self._staticAppInfo.getTimeInterval(),
         ):
             # Create the time object
-            time = Time().setTimeWithMinutes(t)
-            self._schedule[time] = "EMPTY"
+            thisTime = Time().setTimeWithMinutes(t)
+            self._schedule[thisTime] = self._staticAppInfo.getEmptyCode()
 
         self.resetRandomChance()
 
+    def getUpStandsFromTime(self, givenTime: Time, upStands: list[Stand]) -> int:
+        stand = self.getStand(givenTime)
+
+        if stand is None:
+            return -1  # error code
+
+        upStandNames = Stand.getStandNames(upStands)
+
+        count = 0
+        while stand is not None and stand in upStandNames:
+            stand = self.getStand(
+                Time().setTimeWithMinutes(
+                    givenTime.getMinutes()
+                    + self._staticAppInfo.getTimeInterval() * (count + 1)
+                )
+            )
+
+            count += 1
+
+        return count
+
+    def convertScheduleToUp(self, upStands: list[Stand]):
+        upStandNames = Stand.getStandNames(upStands)
+
+        for scheduleTime in self._schedule:
+            if self._schedule[scheduleTime] in upStandNames:
+                self._schedule[scheduleTime] = self._staticAppInfo.getUpStandCode()

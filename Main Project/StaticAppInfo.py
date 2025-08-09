@@ -40,8 +40,20 @@ class StaticAppInfo:
             "H": ["I", "K"],
             "I": ["K"],
         }
+        self._upStandCode: str = "UP STAND"
+        self._breakCode: str = "BREAK"
+        self._emptyCode: str = "EMPTY"
 
         self._count = 0
+
+    def getUpStandCode(self) -> str:
+        return self._upStandCode
+
+    def getBreakCode(self) -> str:
+        return self._breakCode
+
+    def getEmptyCode(self) -> str:
+        return self._emptyCode
 
     def incrementCount(self):
         self._count += 1

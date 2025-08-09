@@ -129,3 +129,16 @@ class Stand:
             self._endTime = time
         else:
             print("ERROR IN STAND - SETTING IS END TIME")
+
+    @staticmethod
+    def getStandNames(standList):
+        standNames = []
+        for stand in standList:
+            if isinstance(stand, Stand):
+                standNames.append(stand.getName())
+            elif isinstance(stand, str):
+                standNames.append(stand)
+            else:
+                raise TypeError(f"expected type Stand or type str, got {type(stand)}")
+
+        return standNames

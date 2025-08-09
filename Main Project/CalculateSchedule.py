@@ -4,6 +4,7 @@ import random
 from Stand import Stand
 from StaticAppInfo import StaticAppInfo
 from Time import Time
+import time
 
 
 # This object will be used to calculate and organize different data
@@ -197,16 +198,18 @@ class CalculateSchedule:
             # Record these instances in a dictionary where the key is the time and the values are lists of the indices
             # of the lifeguards that match this criteria
             possibilitiesForSwitching = dict()
-            for time in timesAndIntervalsUpOnStandGoingOnBreak:
+            for thisTime in timesAndIntervalsUpOnStandGoingOnBreak:
                 # Get the intervals on stand at this time for the lifeguard going up on stand
                 respectiveIntervalsUpOnStandGoingOnBreak = (
-                    timesAndIntervalsUpOnStandGoingOnBreak[time]
+                    timesAndIntervalsUpOnStandGoingOnBreak[thisTime]
                 )
 
                 # If the lifeguard going on break has no intervals on stand at this time, check the others
                 if respectiveIntervalsUpOnStandGoingOnBreak == 0:
                     # Create a list of the respective intervals up on stand
-                    respectiveIntervalsUpOnStandList = timesAndIntervalsUpOnStand[time]
+                    respectiveIntervalsUpOnStandList = timesAndIntervalsUpOnStand[
+                        thisTime
+                    ]
 
                     # Check the list to see if it has a matching value of 0
                     # If it does add the index to the indices that match list
@@ -223,12 +226,12 @@ class CalculateSchedule:
                         # swap would be viable. A swap is not viable if the time is less than the furthest back time
                         if (
                             respectiveIntervalsUpOnStandList[i] == 0
-                            and furthestBackTime.getMinutes() <= time
+                            and furthestBackTime.getMinutes() <= thisTime
                         ):
                             indicesThatMatchList.append(i)
 
                     # Add the entry to the dictionary
-                    possibilitiesForSwitching[time] = indicesThatMatchList
+                    possibilitiesForSwitching[thisTime] = indicesThatMatchList
 
             # Add the created dictionary to the dictionary for all the lifeguards under the key lifeguard
             possibilitiesForStandSwapsForEachLifeguard[lifeguard] = (
@@ -342,14 +345,14 @@ class CalculateSchedule:
 
                     # Calculate the back time
                     backTime = Time()
-                    for time in possibilitiesForStandSwapsForEachLifeguard[
+                    for thisTime in possibilitiesForStandSwapsForEachLifeguard[
                         lifeguardBeingSwapped
                     ]:
                         lifeguardSwaps = possibilitiesForStandSwapsForEachLifeguard[
                             lifeguardBeingSwapped
-                        ][time]
+                        ][thisTime]
                         if lifeguardNum in lifeguardSwaps:
-                            backTime = Time().setTimeWithMinutes(time)
+                            backTime = Time().setTimeWithMinutes(thisTime)
                             break
 
                     # Get the lifeguard being swapped with using the previously found index
@@ -760,7 +763,7 @@ class CalculateSchedule:
 
                 """FINALLY ASSIGN THE STAND"""
                 lifeguard = lifeguardsWorkingAtTime.pop(index)
-                lifeguard.addStand(time=currentTime, standName=standToAdd)
+                lifeguard.addStand(thisTime=currentTime, standName=standToAdd)
 
                 # Print info to help with testing
                 """
@@ -776,6 +779,79 @@ class CalculateSchedule:
     # Reorganizes stands that lifeguards are on to optimize relieving
     def reorganizeLifeguards(self):
         self._staticAppInfo.updateStandCombos(self._upStands)
+
+        earliestTime, latestTime = self.calculatePoolOpenTimeRange()
+
+        self.printSchedule()
+        print()
+
+        timeToUpStandChoices = {}
+        for t in range(
+            earliestTime.getMinutes(),
+            latestTime.getMinutes(),
+            self._staticAppInfo.getTimeInterval(),
+        ):
+            currentTime = Time().setTimeWithMinutes(t)
+
+            timeToUpStandChoices[currentTime] = (
+                self.getStandsAtTimeFromLifeguardSchedules(currentTime, self._upStands)
+            )
+
+        for lifeguard in self._lifeguards:
+            lifeguard.convertScheduleToUp(self._upStands)
+
+        self.printSchedule()
+        print()
+
+        for t in range(
+            earliestTime.getMinutes(),
+            latestTime.getMinutes(),
+            self._staticAppInfo.getTimeInterval(),
+        ):
+            currentTime = Time().setTimeWithMinutes(t)
+
+        currentTime = Time(12, 0)
+        lifeguardsUpOnStand = self.getLifeguardsUpOnStandAtSpecificTime(currentTime)
+        lifeguardsGoingFromDownToUp = self.getLifeguardsComingFromDownAtTime(
+            lifeguardsUpOnStand, currentTime
+        )
+
+        lifeguardToBlockLength = {}
+        for lifeguard in lifeguardsGoingFromDownToUp:
+            blockLength = lifeguard.getUpStandsFromTime(
+                currentTime, [self._staticAppInfo.getUpStandCode()]
+            )
+
+            lifeguardToBlockLength[lifeguard] = blockLength
+
+        for lifeguard in lifeguardToBlockLength:
+            blockLength = lifeguardToBlockLength[lifeguard]
+
+    @staticmethod
+    def getLifeguardsComingFromDownAtTime(
+        lifeguards: list[Lifeguard], currentTime: Time
+    ):
+        lifeguardsComingFromDown = []
+
+        for lifeguard in lifeguards:
+            if lifeguard.getIntervalsUpOnStand(currentTime) == 0:
+                lifeguardsComingFromDown.append(lifeguard)
+
+        return lifeguardsComingFromDown
+
+    def getStandsAtTimeFromLifeguardSchedules(
+        self, currentTime: Time, standList: list[Stand] | list[str]
+    ):
+        standListNames = Stand.getStandNames(standList)
+
+        standsAtTime = []
+        for lifeguard in self._lifeguards:
+            stand = lifeguard.getStand(currentTime)
+
+            if stand in standListNames:
+                standsAtTime.append(stand)
+
+        return standsAtTime
 
     # Returns a list of lifeguards up on stand at a given time
     def getLifeguardsUpOnStandAtSpecificTime(self, currentTime):
@@ -795,14 +871,14 @@ class CalculateSchedule:
 
     # Returns a list with the stands that are open at that time (works for both up stands and downs stands)
     @staticmethod
-    def getStandsOpenAtTime(time, standList):
+    def getStandsOpenAtTime(thisTime, standList):
         # Create the list where the stands are going to be appended to
         standsToReturn = []
 
         # Check to make sure the time is a time
-        if isinstance(time, Time):
+        if isinstance(thisTime, Time):
             for stand in standList:
-                if stand.isOpen(time):
+                if stand.isOpen(thisTime):
                     for i in range(0, stand.getAmountPerInterval()):
                         standsToReturn.append(stand.getName())
         else:
@@ -1010,20 +1086,20 @@ class CalculateSchedule:
         standsAtTime = self.getUpStandsAtTimeDict()
 
         # For each time in lifeguards at time, create the values of the dictionary
-        for time in lifeguardsAtTime:
+        for thisTime in lifeguardsAtTime:
             # Create time for the key of the ratio
-            ratioKeyTime = Time().setTimeWithMinutes(time.getMinutes())
+            ratioKeyTime = Time().setTimeWithMinutes(thisTime.getMinutes())
 
             # Find the equivalent key in standsAtTime
             standKeyTime = Time()
             for standTime in standsAtTime:
-                if standTime.equals(time):
+                if standTime.equals(thisTime):
                     standKeyTime = standTime
             if standsAtTime[standKeyTime] == 0:
                 lifeguardStandRatios[ratioKeyTime] = 0
             else:
                 lifeguardStandRatios[ratioKeyTime] = (
-                    lifeguardsAtTime[time] / standsAtTime[standKeyTime]
+                    lifeguardsAtTime[thisTime] / standsAtTime[standKeyTime]
                 )
 
         return lifeguardStandRatios
@@ -1039,7 +1115,7 @@ class CalculateSchedule:
             count = 0
 
             # Set the time being used for the key
-            time = Time().setTimeWithMinutes(i)
+            thisTime = Time().setTimeWithMinutes(i)
 
             # For each stand in upStandData, check to see if it is open at the given time
             for stand in self._upStands:
@@ -1048,11 +1124,11 @@ class CalculateSchedule:
                 time2 = stand.getEndTime()
 
                 # Increase count by 1 if the current time is between the start and end of the time
-                if time.getIsInBetweenExclusiveEnd(time1, time2):
+                if thisTime.getIsInBetweenExclusiveEnd(time1, time2):
                     count += 1
 
             # Set the dictionary value with its proper key
-            upStandsAtTimeDict[time] = count
+            upStandsAtTimeDict[thisTime] = count
 
         # Return the created dictionary
         return upStandsAtTimeDict
@@ -1067,9 +1143,11 @@ class CalculateSchedule:
                 + j * self._staticAppInfo.getTimeInterval()
             )
             # Reduce the lifeguards working score by the calculated amount for the forward time
-            for time in lifeguardsAtTime:
-                if time.equals(timeToRemoveFromForward):
-                    lifeguardsAtTime[time] -= self._staticAppInfo.getBreakInterval() - j
+            for thisTime in lifeguardsAtTime:
+                if thisTime.equals(timeToRemoveFromForward):
+                    lifeguardsAtTime[thisTime] -= (
+                        self._staticAppInfo.getBreakInterval() - j
+                    )
 
             # Only do if j is not 0 (initial time so that it goes like a pyramid)
             if j != 0:
@@ -1079,9 +1157,9 @@ class CalculateSchedule:
                     - j * self._staticAppInfo.getTimeInterval()
                 )
                 # Reduce the lifeguards working score by the calculated amount for the backward time
-                for time in lifeguardsAtTime:
-                    if time.equals(timeToRemoveFromBackward):
-                        lifeguardsAtTime[time] -= (
+                for thisTime in lifeguardsAtTime:
+                    if thisTime.equals(timeToRemoveFromBackward):
+                        lifeguardsAtTime[thisTime] -= (
                             self._staticAppInfo.getBreakInterval() - j
                         )
 
@@ -1096,13 +1174,13 @@ class CalculateSchedule:
             lifeguardScore = 0
 
             # Set the time being observed
-            time = Time().setTimeWithMinutes(i)
+            thisTime = Time().setTimeWithMinutes(i)
 
             # For each time in the break being observed
             for j in range(0, self._staticAppInfo.getBreakInterval()):
                 # Set the time
                 timeObserving = Time().setTimeWithMinutes(
-                    time.getMinutes() + j * self._staticAppInfo.getTimeInterval()
+                    thisTime.getMinutes() + j * self._staticAppInfo.getTimeInterval()
                 )
 
                 # Only count it if the time being observed is before the end of the day (12 AM)
@@ -1110,7 +1188,7 @@ class CalculateSchedule:
                     for lifeguard in self._lifeguards:
                         if lifeguard.isWorking(timeObserving):
                             lifeguardScore += 1
-            lifeguardsAtTime[time] = lifeguardScore
+            lifeguardsAtTime[thisTime] = lifeguardScore
 
         return lifeguardsAtTime
 
@@ -1119,14 +1197,14 @@ class CalculateSchedule:
         return self._lifeguards
 
     # Returns lifeguards that are working at a specific time
-    def getLifeguardsWorkingAtASpecificTime(self, time):
+    def getLifeguardsWorkingAtASpecificTime(self, thisTime):
         # Create an empty list that will be appended to
         lifeguardsWorkingAtTime = []
 
         # Continue if the time is a Time object
-        if isinstance(time, Time):
+        if isinstance(thisTime, Time):
             for lifeguard in self._lifeguards:
-                if lifeguard.isWorking(time):
+                if lifeguard.isWorking(thisTime):
                     lifeguardsWorkingAtTime.append(lifeguard)
         else:
             print("ERROR IN CALCULATE SCHEDULE - time variable not correct for gLWAAST")
@@ -1144,7 +1222,7 @@ class CalculateSchedule:
         return lifeguardsWithBreaks
 
     # Returns the time range between when the first lifeguard enters to when the last lifeguard leaves
-    def calculatePoolOpenTimeRange(self):
+    def calculatePoolOpenTimeRange(self) -> tuple[Time, Time]:
         # Set variables for the earliest time and the latest time
         earliestTime = Time()
         latestTime = Time()
@@ -1161,7 +1239,7 @@ class CalculateSchedule:
                 latestTime = lifeguard.getShiftEndTime()
 
         # Return a list that is the pair of the two times together
-        return [earliestTime, latestTime]
+        return earliestTime, latestTime
 
     # Prints the schedule (good for testing)
     def printSchedule(self):
@@ -1208,10 +1286,14 @@ class CalculateSchedule:
             # Add each lifeguard's stand at this time
             for lifeguard in self._lifeguards:
                 stand = lifeguard.getStand(currentTime)
-                if stand == "BREAK":
+                if stand is None:
+                    stand = ""
+                elif stand == self._staticAppInfo.getUpStandCode():
+                    stand = "UP"
+                elif stand == self._staticAppInfo.getBreakCode():
                     stand = "\033[93m YYY\033[0m"
-                if stand == "EMPTY":
-                    stand = "\033[91m  NA\033[0m"
+                elif stand == self._staticAppInfo.getEmptyCode():
+                    stand = "\033[38;5;208m  NA\033[0m"
                 line += (spaceLength - len(stand)) * " " + stand + "|"
 
             # Print the time
