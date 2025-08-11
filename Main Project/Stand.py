@@ -133,6 +133,7 @@ class Stand:
     @staticmethod
     def getStandNames(standList):
         standNames = []
+
         for stand in standList:
             if isinstance(stand, Stand):
                 standNames.append(stand.getName())

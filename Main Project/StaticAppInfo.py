@@ -352,8 +352,14 @@ class StaticAppInfo:
             print(dictionary)
 
     def getStandComboPermutations(
-        self, permutations: dict[int, list[list[str]]] = {}, depth: list[str] = []
-    ):
+        self, permutations: dict[int, list[list[str]]] = None, depth: list[str] = None
+    ) -> dict[int, list[list[str]]]:
+        if permutations is None:
+            permutations = {}
+
+        if depth is None:
+            depth = []
+
         def addPermutation(permutation: list[str]):
             permutation = list(permutation)
 

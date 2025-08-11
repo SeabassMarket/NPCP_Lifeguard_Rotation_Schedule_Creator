@@ -784,6 +784,8 @@ class CalculateSchedule:
 
     # Reorganizes stands that lifeguards are on to optimize relieving
     def reorganizeLifeguards(self):
+        self.printSchedule()
+        print()
         self._staticAppInfo.updateStandCombos(self._upStands)
 
         earliestTime, latestTime = self.calculatePoolOpenTimeRange()
@@ -805,6 +807,9 @@ class CalculateSchedule:
         for lifeguard in self._lifeguards:
             lifeguard.convertScheduleToUp(self._upStands)
 
+        self.printSchedule()
+        print()
+
         # Reorganize for each time of day
         for i in range(0, len(timeToUpStandChoices)):
             """
@@ -815,29 +820,97 @@ class CalculateSchedule:
             The backup algorithm is to cover the holes left behind by the pretty algorithm to follow these rules:
                 1. No consecutive, identical up stands (e.g. E -> E, J -> J)
                 2. No circular rotations (e.g. A -> B, B -> C, C -> A; in this situation everyone relieves each other)
+                
+            These two algorithms are combined with the function call below
             """
-            self.addStandCombos()  # Pretty
             self.reorganizeLifeguardsAtTime(timeToUpStandChoices, i)  # Backup
 
-        """TESTING"""
-        currentTime = Time(12, 0)
+    def addStandCombos(self, timeToUpStandChoices: dict[Time, list[str]], index: int):
+        # Checks and initialization
+
+        currentTime = list(timeToUpStandChoices.keys())[index]
+
         lifeguardsUpOnStand = self.getLifeguardsUpOnStandAtSpecificTime(currentTime)
         lifeguardsGoingFromDownToUp = self.getLifeguardsComingFromDownAtTime(
             lifeguardsUpOnStand, currentTime
         )
 
-        lifeguardToBlockLength = {}
+        if len(lifeguardsGoingFromDownToUp) < 1:
+            return
+
+        # Create block length dictionary
+
+        lifeguardToBlockLength: dict[Lifeguard, int] = {}
         for lifeguard in lifeguardsGoingFromDownToUp:
             blockLength = lifeguard.getUpStandsFromTime(currentTime, self._upStands)
 
             lifeguardToBlockLength[lifeguard] = blockLength
 
+        # Sort block length dictionary
+
+        lifeguardKeys = list(lifeguardToBlockLength.keys())
+        blockLengthValues = list(lifeguardToBlockLength.values())
+
+        length = len(lifeguardToBlockLength)
+        lifeguardToBlockLength: dict[Lifeguard, int] = {}
+        for i in range(length):
+            maximumBlockLength = max(blockLengthValues)
+            thisIndex = blockLengthValues.index(maximumBlockLength)
+
+            lifeguard = lifeguardKeys.pop(thisIndex)
+            blockLength = blockLengthValues.pop(thisIndex)
+
+            lifeguardToBlockLength[lifeguard] = blockLength
+
+        # Get the stand combos permutations and remove all those that include stands not present at times (function)
+
+        def getValidPermutations() -> dict[int, list[list[str]]]:
+            permutations = self._staticAppInfo.getStandComboPermutations()
+
+            newPermutations: dict[int, list[list[str]]] = {}
+
+            maxBlockLength = max(lifeguardToBlockLength.values())
+
+            for i in range(1, maxBlockLength + 1):
+                permutationList = list(permutations.get(i, []))
+
+                for p in range(len(permutationList) - 1, -1, -1):
+                    permutation = permutationList[p]
+
+                    popped = False
+                    for s in range(0, len(permutation)):
+                        if index + s < len(timeToUpStandChoices):
+                            x = list(timeToUpStandChoices.values())
+                            standList = list(timeToUpStandChoices.values())[index + s]
+
+                            thisStand = permutation[s]
+
+                            if not popped and thisStand not in standList:
+                                permutationList.pop(p)
+
+                                popped = True
+
+                newPermutations[i] = permutationList
+
+            return newPermutations
+
+        # Assign pretty stand rotations
+
         for lifeguard in lifeguardToBlockLength:
             blockLength = lifeguardToBlockLength[lifeguard]
-        """TESTING"""
 
-    def addStandCombos(self):
-        pass
+            standCombos = getValidPermutations().get(blockLength, [])
+
+            if len(standCombos) > 0 and blockLength > 1:
+                standCombo = standCombos[0]
+
+                for t in range(len(standCombo)):
+                    currentTime = list(timeToUpStandChoices.keys())[index + t]
+                    stand = standCombo[t]
+                    lifeguard.addStand(currentTime, stand)
+
+                    standChoices = timeToUpStandChoices[currentTime]
+                    standChoices.pop(standChoices.index(stand))
 
     def reorganizeLifeguardsAtTime(
         self, timeToUpStandChoices: dict[Time, list[str]], index: int
@@ -861,9 +934,6 @@ class CalculateSchedule:
 
         currentTime = list(timeToUpStandChoices.keys())[index]
         currentLifeguardsUp = self.getLifeguardsUpOnStandAtSpecificTime(currentTime)
-        currentLifeguardsDown = self.getLifeguardsDownOnStandAtASpecificTime(
-            currentTime
-        )
 
         lastTime = list(timeToUpStandChoices.keys())[index - 1]
         lastLifeguardsUp = self.getLifeguardsUpOnStandAtSpecificTime(lastTime)
@@ -879,11 +949,66 @@ class CalculateSchedule:
             currentLifeguardsUp, currentTime
         )
 
+        # Create block length dictionary
+
+        lifeguardToBlockLength: dict[Lifeguard, int] = {}
+        for lifeguard in downToUpLifeguards:
+            blockLength = lifeguard.getUpStandsFromTime(currentTime, self._upStands)
+
+            lifeguardToBlockLength[lifeguard] = blockLength
+
+        # Define function that distributes to clusters
+
+        def distributeLifeguards(code: str, lifeguards: list):
+            if len(clusters) < 1:
+                for i in range(clustersLength):
+                    clusters.append({})
+
+            spot = 0
+            lifeguards = list(lifeguards)
+            while len(lifeguards) > 0:
+                cluster = clusters[spot]
+
+                clusterList = cluster.get(code)
+
+                if clusterList is None:
+                    clusterList = []
+                    cluster[code] = clusterList
+
+                if code == downToUpCode:
+                    maxIndex = 0
+
+                    maxBlockLength = lifeguardToBlockLength[lifeguards[0]]
+
+                    for i in range(1, len(lifeguards)):
+                        blockLength = lifeguardToBlockLength[lifeguards[i]]
+
+                        if blockLength > maxBlockLength:
+                            maxBlockLength = blockLength
+
+                            maxIndex = i
+
+                    lifeguard = lifeguards.pop(maxIndex)
+                elif code == upTwiceCode:
+                    lifeguard = lifeguards.pop(0)
+                else:
+                    raise CalculaterException(
+                        "lifeguards attempted to be distributed without good code"
+                    )
+
+                clusterList.append(lifeguard)
+
+                spot += 1
+                if spot >= len(clusters):
+                    spot = 0
+
         # Create clusters
         """
         The clusters follow the roles describes for the 3 lifeguard groups described above.
         
         The amount of clusters is dependent on the number of down to up lifeguards (significance explain above).
+        
+        We also get all of the previous stands for each lifeguard up twice. This will allows us to make it "pretty"
         """
 
         clusters: list[dict[str, list[Lifeguard]]] = []
@@ -892,16 +1017,49 @@ class CalculateSchedule:
         if clustersLength < 1:
             raise CalculaterException("reorganizing: no lifeguards going down to up")
 
-        self.distributeValues(clusters, clustersLength, upTwiceCode, lifeguardsUpTwice)
-        self.distributeValues(
-            clusters, clustersLength, downToUpCode, downToUpLifeguards
-        )
+        lifeguardToPreviousStand: dict[Lifeguard, str] = {}
+        for lifeguard in lifeguardsUpTwice:
+            lifeguardToPreviousStand[lifeguard] = lifeguard.getStand(lastTime)
 
-        # Analyze clusters and reorganize stands
+        distributeLifeguards(upTwiceCode, lifeguardsUpTwice)
+        distributeLifeguards(downToUpCode, downToUpLifeguards)
+
+        # Analyze clusters and reorganize stands (function)
         """
         To reorganize the stands, we make an effort to pair up a stand with itself, then fill the other holes.
         After that, we just shift all the stands down one slot. This combination solves both main problems.
         """
+
+        def assignStandsToCluster():
+            downToUpLifeguard = cluster.get(downToUpCode)[0]
+
+            upTwiceLifeguards = cluster.get(upTwiceCode, [])
+
+            allLifeguards = [downToUpLifeguard] + upTwiceLifeguards
+
+            newStandAssignments = [freshStands.pop(random.randrange(len(freshStands)))]
+
+            upTwiceAssignments = []
+            for thisLifeguard in upTwiceLifeguards:
+                previousStand = thisLifeguard.getStand(lastTime)
+
+                if previousStand in doubleStands:
+                    sAdd = previousStand
+                else:
+                    sAdd = freshStands.pop(random.randrange(len(freshStands)))
+
+                upTwiceAssignments.append(sAdd)
+
+            newStandAssignments = newStandAssignments + upTwiceAssignments
+
+            shifted = newStandAssignments[1:] + [newStandAssignments[0]]
+
+            for i in range(len(allLifeguards)):
+                thisLifeguard = allLifeguards[i]
+
+                sAdd = shifted[i]
+
+                thisLifeguard.addStand(currentTime, sAdd)
 
         doubleStands = []
         for lifeguard in lifeguardsUpTwice:
@@ -915,63 +1073,10 @@ class CalculateSchedule:
             if stand not in doubleStands:
                 freshStands.append(stand)
 
-        pass
-
         for cluster in clusters:
-            downToUpLifeguard = cluster.get(downToUpCode)[0]
-
-            upTwiceLifeguards = cluster.get(upTwiceCode, [])
-
-            allLifeguards = [downToUpLifeguard] + upTwiceLifeguards
-
-            newStandAssignments = [freshStands.pop(random.randrange(len(freshStands)))]
-
-            for lifeguard in upTwiceLifeguards:
-                previousStand = lifeguard.getStand(lastTime)
-
-                if previousStand in doubleStands:
-                    stand = previousStand
-                else:
-                    stand = freshStands.pop(random.randrange(len(freshStands)))
-
-                newStandAssignments.append(stand)
-
-            shifted = [newStandAssignments[-1]] + newStandAssignments[:-1]
-
-            for i in range(len(allLifeguards)):
-                lifeguard = allLifeguards[i]
-
-                stand = shifted[i]
-
-                lifeguard.addStand(currentTime, stand)
+            assignStandsToCluster()
 
         pass
-
-    @staticmethod
-    def distributeValues(
-        clusters: list[dict[str, list[Lifeguard]]], length: int, code: str, values: list
-    ):
-        if len(clusters) < 1:
-            for i in range(length):
-                clusters.append({})
-
-        index = 0
-        values = list(values)
-        while len(values) > 0:
-            cluster = clusters[index]
-
-            value = values.pop(0)
-
-            clusterList = cluster.get(code)
-
-            if clusterList is None:
-                cluster[code] = [value]
-            else:
-                cluster[code].append(value)
-
-            index += 1
-            if index >= len(clusters):
-                index = 0
 
     def getLifeguardsComingFromUpAtTime(
         self, lifeguards: list[Lifeguard], currentTime: Time
@@ -1018,8 +1123,10 @@ class CalculateSchedule:
         # Check type of currentTime
         if isinstance(currentTime, Time):
             lifeguardsWorking = self.getLifeguardsWorkingAtASpecificTime(currentTime)
+
             upStands = Stand.getStandNames(self._upStands)
             upStands.append(self._staticAppInfo.getUpStandCode())
+
             for i in range(len(lifeguardsWorking) - 1, -1, -1):
                 if lifeguardsWorking[i].getStand(currentTime) not in upStands:
                     lifeguardsWorking.pop(i)

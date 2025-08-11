@@ -112,6 +112,7 @@ def checkScheduleForDoubles(calc: CalculateSchedule):
     return found
 
 
+"""
 for i in range(100):
     myCalc = calculateSchedule()
 
@@ -119,6 +120,7 @@ for i in range(100):
         myCalc.printSchedule()
         print(f"Calculation number {i}")
         print()
+"""
 
 
 calculator = calculateSchedule()
