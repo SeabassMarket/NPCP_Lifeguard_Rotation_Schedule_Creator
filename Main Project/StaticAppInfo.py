@@ -32,13 +32,14 @@ class StaticAppInfo:
         # For calculations
         self._standCombos = {
             "T": ["S"],
-            "A": ["B", "C"],
             "C": ["E"],
+            "A": ["B", "C"],
             "J": ["K"],
-            "E": ["K", "H"],
-            "F": ["G"],
             "H": ["I", "K"],
-            "I": ["K"],
+            "E": ["H", "K"],
+            "F": ["G"],
+            "I": ["K", "J"],
+            "K": ["H"],
         }
         self._upStandCode: str = "UP STAND"
         self._breakCode: str = "BREAK"
@@ -385,12 +386,13 @@ class StaticAppInfo:
                 return permutations
 
             for combo in possibleCombos:
-                newDepth = list(depth)
+                if combo not in depth:
+                    newDepth = list(depth)
 
-                newDepth.append(combo)
+                    newDepth.append(combo)
 
-                self.getStandComboPermutations(permutations, newDepth)
-                addPermutation(newDepth)
+                    self.getStandComboPermutations(permutations, newDepth)
+                    addPermutation(newDepth)
 
         return permutations
 
