@@ -14,22 +14,20 @@ staticAppInfo = StaticAppInfo(tk.Tk())
 
 # Create all the information for the stands
 upStands = {
-    "E": [Time(hour=11, minute=0), Time(hour=20, minute=40), 1],
-    "H": [Time(hour=11, minute=0), Time(hour=20, minute=40), 1],
-    "K": [Time(hour=11, minute=0), Time(hour=20, minute=40), 1],
-    "A": [Time(hour=11, minute=0), Time(hour=20, minute=0), 1],
-    "B": [Time(hour=11, minute=0), Time(hour=20, minute=0), 1],
-    "I": [Time(hour=12, minute=40), Time(hour=20, minute=40), 1],
-    "J": [Time(hour=13, minute=0), Time(hour=18, minute=40), 1],
-    "C": [Time(hour=13, minute=0), Time(hour=18, minute=40), 1],
+    "E": [Time(hour=11, minute=0), Time(hour=20, minute=0), 1],
+    "H": [Time(hour=11, minute=0), Time(hour=20, minute=0), 1],
+    "K": [Time(hour=11, minute=0), Time(hour=20, minute=0), 1],
+    "A": [Time(hour=12, minute=0), Time(hour=19, minute=0), 1],
+    "B": [Time(hour=12, minute=0), Time(hour=19, minute=0), 1],
+    "I": [Time(hour=13, minute=0), Time(hour=16, minute=0), 1],
     "T": [Time(hour=13, minute=0), Time(hour=19, minute=0), 1],
     "S": [Time(hour=13, minute=0), Time(hour=19, minute=0), 1],
 }
 timelyDownStands = {
-    "SU": [Time(hour=9, minute=0), Time(hour=10, minute=0), 4],
-    "DT": [Time(hour=14, minute=0), Time(hour=14, minute=0), 4],
-    "ST": [Time(hour=15, minute=0), Time(hour=15, minute=0), 3],
-    "CU": [Time(hour=20, minute=40), Time(hour=21, minute=0), 6],
+    "SU": [Time(hour=10, minute=40), Time(hour=11, minute=0), 3],
+    "DT": [Time(hour=14, minute=0), Time(hour=14, minute=20), 2],
+    "ST": [Time(hour=15, minute=0), Time(hour=15, minute=20), 2],
+    "CU": [Time(hour=20, minute=0), Time(hour=21, minute=0), 5],
 }
 priorityDownStands = {
     "O": [Time(hour=0, minute=0), "end of day", 1],
@@ -53,21 +51,16 @@ lifeguards = {
     "1": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
     "2": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
     "3": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
-    "4": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
-    "5": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
-    "6": [Time(hour=11, minute=20), Time(hour=19, minute=20)],
-    "7": [Time(hour=11, minute=40), Time(hour=19, minute=40)],
+    "4": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
+    "5": [Time(hour=11, minute=0), Time(hour=14, minute=0)],
+    "6": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
+    "7": [Time(hour=12, minute=0), Time(hour=20, minute=0)],
     "8": [Time(hour=11, minute=40), Time(hour=19, minute=40)],
-    "9": [Time(hour=12, minute=40), Time(hour=20, minute=40)],
+    "9": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
     "10": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
     "11": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
     "12": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
     "13": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
-    "14": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
-    "15": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
-    "16": [Time(hour=13, minute=0), Time(hour=18, minute=0)],
-    "17": [Time(hour=13, minute=0), Time(hour=18, minute=0)],
-    "18": [Time(hour=13, minute=0), Time(hour=18, minute=0)],
 }
 
 lifeguardData = {

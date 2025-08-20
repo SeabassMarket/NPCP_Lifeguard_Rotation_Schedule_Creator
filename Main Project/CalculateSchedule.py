@@ -593,15 +593,75 @@ class CalculateSchedule:
 
     # Assigns the fill-in down stands to lifeguards at a given time
     def assignFillInDownStandsAtTime(self, currentTime: Time):
-        pass
+        lifeguardsDownAtTime = self.getLifeguardsOnGivenStandsAtTime(
+            currentTime, [self._staticAppInfo.getEmptyCode()]
+        )
+
+        lifeguardsLength = len(lifeguardsDownAtTime)
+
+        standsOpen = Stand.getStandNames(self._fillInDownStands)
+
+        for i in range(lifeguardsLength):
+            lifeguard = lifeguardsDownAtTime.pop(
+                random.randrange(len(lifeguardsDownAtTime))
+            )
+
+            stand = standsOpen[random.randrange(len(standsOpen))]
+
+            lifeguard.addStand(currentTime, stand)
 
     # Assigns the priority down stands to lifeguards at a given time
     def assignPriorityDownStandsAtTime(self, currentTime: Time):
-        pass
+        lifeguardsDownAtTime = self.getLifeguardsOnGivenStandsAtTime(
+            currentTime, [self._staticAppInfo.getEmptyCode()]
+        )
+
+        standsOpen = Stand.getStandNames(self._priorityDownStands)
+
+        minimum = min([len(lifeguardsDownAtTime), len(standsOpen)])
+
+        for i in range(minimum):
+            lifeguard = lifeguardsDownAtTime.pop(
+                random.randrange(len(lifeguardsDownAtTime))
+            )
+
+            stand = standsOpen.pop(0)
+
+            lifeguard.addStand(currentTime, stand)
 
     # Assigns the timely down stands to lifeguards at a given time
     def assignTimelyDownStandsAtTime(self, currentTime: Time):
-        pass
+        lifeguardsDownAtTime = self.getLifeguardsOnGivenStandsAtTime(
+            currentTime, [self._staticAppInfo.getEmptyCode()]
+        )
+
+        standsOpen = self.getStandsOpenAtTime(currentTime, self._timelyDownStands)
+
+        minimum = min([len(lifeguardsDownAtTime), len(standsOpen)])
+
+        for i in range(minimum):
+            lifeguard = lifeguardsDownAtTime.pop(
+                random.randrange(len(lifeguardsDownAtTime))
+            )
+
+            stand = standsOpen.pop(0)
+
+            lifeguard.addStand(currentTime, stand)
+
+    # Gets the lifeguards on a specific set of stands at a given time
+    def getLifeguardsOnGivenStandsAtTime(
+        self, currentTime: Time, standList: list[Stand | str]
+    ) -> list[Lifeguard]:
+        standListNames = Stand.getStandNames(standList)
+
+        lifeguardsWorkingAtTime = self.getLifeguardsWorkingAtASpecificTime(currentTime)
+
+        lifeguardsOnGivenStands = []
+        for lifeguard in lifeguardsWorkingAtTime:
+            if lifeguard.getStand(currentTime) in standListNames:
+                lifeguardsOnGivenStands.append(lifeguard)
+
+        return lifeguardsOnGivenStands
 
     # Assigns the up stands to lifeguards at a given time
     def assignUpStandsAtTime(self, currentTime):
@@ -818,7 +878,7 @@ class CalculateSchedule:
                 
             These two algorithms are combined with the function call below
             """
-            self.reorganizeLifeguardsAtTime(timeToUpStandChoices, i)  # Backup
+            self.reorganizeLifeguardsAtTime(timeToUpStandChoices, i)
 
     def reorganizeLifeguardsAtTime(
         self, timeToUpStandChoices: dict[Time, list[str]], index: int
@@ -1374,7 +1434,7 @@ class CalculateSchedule:
 
     # Returns a list with the stands that are open at that time (works for both up stands and downs stands)
     @staticmethod
-    def getStandsOpenAtTime(thisTime, standList):
+    def getStandsOpenAtTime(thisTime: Time, standList: list[Stand]):
         # Create the list where the stands are going to be appended to
         standsToReturn = []
 
@@ -1382,7 +1442,8 @@ class CalculateSchedule:
         if isinstance(thisTime, Time):
             for stand in standList:
                 if stand.isOpen(thisTime):
-                    standsToReturn.append(stand.getName())
+                    for i in range(stand.getAmountPerInterval()):
+                        standsToReturn.append(stand.getName())
         else:
             print("ERROR IN CALCULATE SCHEDULE - gSOAT")
 
@@ -1823,10 +1884,18 @@ class CalculateSchedule:
                     stand = "\033[93m YYY\033[0m"
                 elif stand == self._staticAppInfo.getEmptyCode():
                     stand = "\033[38;5;208m  NA\033[0m"
+                elif (
+                    stand in currentUpStands
+                    and stand not in lastUpStands
+                    and stand not in nextUpStands
+                ):
+                    stand = f"\033[38;5;208m{stand}\033[0m"
                 elif stand in currentUpStands and stand not in lastUpStands:
                     stand = f"\033[92m{stand}\033[0m"
                 elif stand in currentUpStands and stand not in nextUpStands:
                     stand = f"\033[91m{stand}\033[0m"
+                elif stand not in currentUpStands:
+                    stand = f"\033[96m{stand}\033[0m"
 
                 line += (spaceLength - standLength) * " " + stand + "|"
 

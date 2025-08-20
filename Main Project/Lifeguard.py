@@ -71,7 +71,7 @@ class Lifeguard:
         ):
             # Create the time object
             thisTime = Time().setTimeWithMinutes(t)
-            self._schedule[thisTime] = "EMPTY"
+            self._schedule[thisTime] = self._staticAppInfo.getEmptyCode()
         self.updateBreaks()
 
         # Initialize random chance selections to 0
