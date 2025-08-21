@@ -40,7 +40,7 @@ class StaticAppInfo:
             "F": ["G"],
             "I": ["K", "J"],
             "K": ["H"],
-            "B": ["A"]
+            "B": ["A"],
         }
         self._upStandCode: str = "UP STAND"
         self._breakCode: str = "BREAK"

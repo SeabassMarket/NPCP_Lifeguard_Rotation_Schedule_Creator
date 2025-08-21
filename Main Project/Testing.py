@@ -118,6 +118,33 @@ for i in range(100):
 
 
 calculator = calculateSchedule()
+
+blockLengthToCount: dict[int, int] = {}
+for lifeguard in calculator.getLifeguards():
+    schedule = lifeguard.getSchedule()
+
+    for currentTime in schedule:
+        currentStand = lifeguard.getStand(currentTime)
+
+        lastTime = Time().setTimeWithMinutes(
+            currentTime.getMinutes() - staticAppInfo.getTimeInterval()
+        )
+        lastStand = lifeguard.getStand(lastTime)
+
+        upStands = calculator.getUpStandNames()
+
+        if currentStand in upStands and lastStand not in upStands:
+            blockLength = lifeguard.getUpStandsFromTime(currentTime, upStands)
+
+            count = blockLengthToCount.get(blockLength, 0)
+
+            blockLengthToCount[blockLength] = count + 1
+
+sortedBlockLengthKeys = sorted(list(blockLengthToCount.keys()))
+for blockLength in sortedBlockLengthKeys:
+    count = blockLengthToCount[blockLength]
+    print(f"There were {count} blocks with length {blockLength}")
+
 calculator.printSchedule()
 
 """

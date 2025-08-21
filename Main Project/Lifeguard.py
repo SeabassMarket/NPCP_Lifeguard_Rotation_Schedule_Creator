@@ -457,14 +457,17 @@ class Lifeguard:
 
         self.resetRandomChance()
 
-    def getUpStandsFromTime(self, givenTime: Time, upStands: list[Stand]) -> int:
+    def getUpStandsFromTime(self, givenTime: Time, upStands: list[Stand | str]) -> int:
         stand = self.getStand(givenTime)
 
         if stand is None:
             return -1  # error code
 
         upStandNames = Stand.getStandNames(upStands)
-        upStandNames.append(self._staticAppInfo.getUpStandCode())
+
+        upStandCode = self._staticAppInfo.getUpStandCode()
+        if upStandCode not in upStandNames:
+            upStandNames.append(self._staticAppInfo.getUpStandCode())
 
         count = 0
         while stand is not None and stand in upStandNames:

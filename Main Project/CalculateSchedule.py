@@ -28,7 +28,7 @@ class CalculateSchedule:
 
         # Create lifeguard objects
         for lifeguardKey in lifeguardData:
-            self._lifeguards = []
+            self._lifeguards: list[Lifeguard] = []
             lifeguards = lifeguardData[lifeguardKey]
             count = 0
             for lifeguard in lifeguards:
@@ -912,6 +912,7 @@ class CalculateSchedule:
 
         currentTime = list(timeToUpStandChoices.keys())[index]
         currentLifeguardsUp = self.getLifeguardsUpOnStandAtSpecificTime(currentTime)
+        random.shuffle(currentLifeguardsUp)
 
         if index > 0:
             lastTime = list(timeToUpStandChoices.keys())[index - 1]
@@ -1246,7 +1247,22 @@ class CalculateSchedule:
             firstStands.append(permutation[0])
 
         dupeFirstStands = list(firstStands)
-        for lifeguard in sortedDownToUpLifeguards:
+        for i in range(len(clusters)):
+            maxBlockLength = lifeguardToBlockLength[sortedDownToUpLifeguards[0]]
+
+            lifeguardsWithMaxBlockLength = []
+            for lifeguard in sortedDownToUpLifeguards:
+                blockLength = lifeguardToBlockLength[lifeguard]
+
+                if blockLength == maxBlockLength:
+                    lifeguardsWithMaxBlockLength.append(lifeguard)
+
+            lifeguard = lifeguardsWithMaxBlockLength[
+                random.randrange(len(lifeguardsWithMaxBlockLength))
+            ]
+
+            sortedDownToUpLifeguards.pop(sortedDownToUpLifeguards.index(lifeguard))
+
             blockLength = lifeguardToBlockLength[lifeguard]
 
             standComboPotential = getStandComboPotential(blockLength)
@@ -1756,7 +1772,7 @@ class CalculateSchedule:
         return lifeguardsAtTime
 
     # Returns the lifeguards list
-    def getLifeguards(self):
+    def getLifeguards(self) -> list[Lifeguard]:
         return self._lifeguards
 
     # Returns lifeguards that are working at a specific time
