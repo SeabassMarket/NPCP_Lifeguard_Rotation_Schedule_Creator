@@ -93,6 +93,7 @@ print()
 
 checks = 0
 
+
 def listsAreEqual(list1, list2):
     global checks
 
