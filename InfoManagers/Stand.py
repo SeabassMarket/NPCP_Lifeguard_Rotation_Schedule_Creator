@@ -1,5 +1,5 @@
 # Import libraries
-from Time import Time
+from InfoManagers.Time import Time
 
 
 # This class is meant to store basic information about a stand

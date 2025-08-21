@@ -1,9 +1,8 @@
 # import libraries
 import math
-from Time import Time
-import time
-from Stand import Stand
-from StaticAppInfo import StaticAppInfo
+from InfoManagers.Time import Time
+from InfoManagers.Stand import Stand
+from InfoManagers.StaticAppInfo import StaticAppInfo
 
 
 # This object represents the aspects of a lifeguard

@@ -1,14 +1,12 @@
 # import libraries
-import random
-import time
 import tkinter as tk
 
-from CalculateSchedule import CalculateSchedule
-from Stand import Stand
-from StaticAppInfo import StaticAppInfo
-from Time import Time
+from InfoManagers.CalculateSchedule import CalculateSchedule
+from InfoManagers.StaticAppInfo import StaticAppInfo
+from InfoManagers.Time import Time
 
-"""THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION   """
+"""THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION"""
+
 # Create static app info
 staticAppInfo = StaticAppInfo(tk.Tk())
 
@@ -80,44 +78,8 @@ def calculateSchedule():
     return calc
 
 
-def checkScheduleForDoubles(calc: CalculateSchedule):
-    found = False
-
-    calcLifeguards = calc.getLifeguards()
-
-    upStandNames = calc.getUpStandNames()
-
-    for lifeguard in calcLifeguards:
-        stands = list(lifeguard.getSchedule().values())
-
-        for i in range(1, len(stands)):
-            lastStand = stands[i - 1]
-            thisStand = stands[i]
-
-            if thisStand in upStandNames and lastStand == thisStand:
-                found = True
-
-                lastTime = list(lifeguard.getSchedule().keys())[i - 1]
-
-                print(
-                    f"{lifeguard.getIdNum()} has double stands {lastStand} and {thisStand} at {lastTime.get12Time()}"
-                )
-
-    return found
-
-
-"""
-for i in range(100):
-    myCalc = calculateSchedule()
-
-    if checkScheduleForDoubles(myCalc):
-        myCalc.printSchedule()
-        print(f"Calculation number {i}")
-        print()
-"""
-
-
 calculator = calculateSchedule()
+calculator.printSchedule()
 
 blockLengthToCount: dict[int, int] = {}
 for lifeguard in calculator.getLifeguards():
@@ -144,57 +106,3 @@ sortedBlockLengthKeys = sorted(list(blockLengthToCount.keys()))
 for blockLength in sortedBlockLengthKeys:
     count = blockLengthToCount[blockLength]
     print(f"There were {count} blocks with length {blockLength}")
-
-calculator.printSchedule()
-
-"""
-count = 0
-start = time.time()
-print("starting calculation")
-while count < 1:
-    calculateSchedule()
-    count += 1
-print(time.time() - start)
-
-calculator.printSchedule()
-
-print(f"\n{count}")
-"""
-
-"""
-TEST CODE FOR RECURSIVE FUNCTIONS
-values = [
-    [4, 8, 1, 3],
-    [9, 1, 4, 2],
-    [3, 2, 4],
-    [8, 4, 9, 11],
-    [3, 10, 7, 5, 8],
-]
-
-options = calculator.recursivelyGenerateRearrangementPermutations(values)
-staticAppInfo.printRecursivelyLongDictionary(options)
-print()
-optionsList = calculator.recursivelyInterpretGeneratedDictionary(options)
-for value in optionsList:
-    print(value)
-
-print()
-def listsAreEqual(list1, list2, s):
-    result = True
-    for i in range(0, len(list1)):
-        s.incrementCount()
-        if list1[i] != list2[i]:
-            result = False
-    return result
-
-result1 = False
-for n in range(0, len(optionsList)):
-    for k in range(0, len(optionsList)):
-        if k != n:
-            if listsAreEqual(optionsList[n], optionsList[k], staticAppInfo):
-                result1 = True
-print(result1)
-print(staticAppInfo.getCount())
-
-print(len(optionsList), "possible permutations generated")
-"""

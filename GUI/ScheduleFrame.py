@@ -2,8 +2,8 @@
 import tkinter as tk
 from tkinter import ttk
 from EventFrame import EventFrame
-from StaticAppInfo import StaticAppInfo
-from Time import Time
+from InfoManagers.StaticAppInfo import StaticAppInfo
+from InfoManagers.Time import Time
 
 """This class serves more for organization. It will consist of a frame,
 with a canvas inside. Attached to this canvas will be a scroll bar.

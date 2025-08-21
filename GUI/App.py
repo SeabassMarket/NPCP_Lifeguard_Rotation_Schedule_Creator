@@ -4,7 +4,7 @@ from tkinter import ttk
 from tkinter import font
 from ScheduleFrame import ScheduleFrame
 from LifeguardFrame import LifeguardFrame
-from StaticAppInfo import StaticAppInfo
+from InfoManagers.StaticAppInfo import StaticAppInfo
 
 
 # Mother app structure of the whole program

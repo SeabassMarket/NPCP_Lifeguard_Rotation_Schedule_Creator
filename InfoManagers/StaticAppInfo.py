@@ -1,6 +1,6 @@
 # import libraries
-from Time import Time
-from Stand import Stand
+from InfoManagers.Time import Time
+from InfoManagers.Stand import Stand
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font
@@ -46,8 +46,6 @@ class StaticAppInfo:
         self._breakCode: str = "BREAK"
         self._emptyCode: str = "EMPTY"
 
-        self._count = 0
-
     def getUpStandCode(self) -> str:
         return self._upStandCode
 
@@ -56,12 +54,6 @@ class StaticAppInfo:
 
     def getEmptyCode(self) -> str:
         return self._emptyCode
-
-    def incrementCount(self):
-        self._count += 1
-
-    def getCount(self):
-        return self._count
 
     # Returns the stand combos
     def getStandCombos(self):
@@ -297,6 +289,8 @@ class StaticAppInfo:
                 timesToPop.append(time)
         for time in timesToPop:
             dictionary.pop(time)
+
+        return "SUCCESS"
 
     # Sorts a list of times in ascending order
     @staticmethod

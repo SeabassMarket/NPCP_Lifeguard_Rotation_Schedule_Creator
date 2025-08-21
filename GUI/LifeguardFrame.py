@@ -2,8 +2,8 @@
 import tkinter as tk
 from tkinter import ttk
 from EventFrame import EventFrame
-from StaticAppInfo import StaticAppInfo
-from Time import Time
+from InfoManagers.StaticAppInfo import StaticAppInfo
+from InfoManagers.Time import Time
 
 """This class is for organization. Only one of these objects will be made.
 This effectively acts as the lifeguard page of the app. This will be
