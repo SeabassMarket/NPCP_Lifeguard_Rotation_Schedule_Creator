@@ -100,13 +100,6 @@ class CalculateSchedule:
         # Initialize the breaks instance variable
         self._breaks = []
 
-    # Returns up stand names
-    def getUpStandNames(self):
-        upStandNames = Stand.getStandNames(self._upStands)
-        upStandNames.append(self._staticAppInfo.getUpStandCode())
-
-        return upStandNames
-
     # Calculate the schedule itself by creating each schedule for each lifeguard
     def calculateSchedule(self):
         # Get the time range of when the pool is open
@@ -1383,6 +1376,21 @@ class CalculateSchedule:
                 lifeguard = lifeguards[k]
 
                 lifeguard.addStand(currentTime, stand)
+
+    # Returns up stand names
+    def getUpStandNames(self):
+        upStandNames = Stand.getStandNames(self._upStands)
+        upStandNames.append(self._staticAppInfo.getUpStandCode())
+
+        return upStandNames
+
+    def getLifeguardNames(self) -> list[str]:
+        lifeguardNames = []
+
+        for lifeguard in self._lifeguards:
+            lifeguardNames.append(lifeguard.getName())
+
+        return lifeguardNames
 
     def getLifeguardsComingFromUpAtTime(
         self, lifeguards: list[Lifeguard], currentTime: Time
