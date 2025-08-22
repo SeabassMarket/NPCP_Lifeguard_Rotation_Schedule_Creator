@@ -82,4 +82,4 @@ gs = GSCommunicator(staticAppInfo, calculator, 2, 2)
 
 gs.setWorksheet("Lifeguard Schedule", "NPCP_GOOGLE_SHEETS_KEY")
 gs.writeScheduleToWorksheet()
-print(f"Schedule uploaded: {gs.getItem("spreadsheet").url}")
+print(f"Schedule uploaded: {gs.getItem('spreadsheet').url}")

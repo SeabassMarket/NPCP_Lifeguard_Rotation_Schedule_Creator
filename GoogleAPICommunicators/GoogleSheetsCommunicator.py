@@ -407,8 +407,6 @@ class GSCommunicator:
             {"textFormat": {"fontFamily": "Times New Roman", "fontSize": 10}},
         )
 
-
-
     def exportDataFrame(self):
         # Export DataFrame
         df_export = self._dataFrame.reset_index()
