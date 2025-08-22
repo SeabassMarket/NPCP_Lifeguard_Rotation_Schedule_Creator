@@ -134,7 +134,6 @@ class ScheduleFrame:
             eventDescriptor=self._eventDescriptor,
             frameDescriptor=self._frameDescriptor,
             characterLimit=2,
-            counter=True,
             defaultList=["A", "B", "C", "E", "F", "G", "H", "I", "J", "K", "T", "S"],
         )
         self._standFrames.append(self._upStandFrame)
