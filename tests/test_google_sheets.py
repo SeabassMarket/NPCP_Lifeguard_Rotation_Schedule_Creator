@@ -211,8 +211,6 @@ worksheet.format(
 )
 
 # Format stand columns
-standColumnWidth = 10
-
 sheets_service.spreadsheets().batchUpdate(
     spreadsheetId=spreadsheet.id,
     body={
@@ -377,8 +375,6 @@ for i in range(len(lifeguards)):
 
         return None
 
-    lifeguard = lifeguards[i]
-
     endOfShift = findEndOfShift()
     if endOfShift is not None:
         thisRange = {
@@ -410,8 +406,6 @@ start = 2
 stands2DArray = list(scheduleData.values())
 
 for i in range(len(lifeguards)):
-    colLetter = colNumToLetter(start + i)
-
     standIndex = 0
     while standIndex < len(stands2DArray):
         currentStands = stands2DArray[standIndex]
