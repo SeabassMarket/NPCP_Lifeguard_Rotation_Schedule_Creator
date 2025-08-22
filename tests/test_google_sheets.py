@@ -9,6 +9,7 @@ from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
 
 from InfoManagers.CalculateSchedule import CalculateSchedule
+from InfoManagers.Lifeguard import Lifeguard
 from InfoManagers.StaticAppInfo import StaticAppInfo
 from InfoManagers.Time import Time
 
@@ -52,7 +53,7 @@ standData = {
 staticAppInfo.setEventDataSpecific(standData, eventDescriptor="stand")
 
 # Create information for the stands
-lifeguards = {
+lifeguardsDict = {
     "1": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
     "2": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
     "3": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
@@ -69,7 +70,7 @@ lifeguards = {
 }
 
 lifeguardData = {
-    "lifeguard": lifeguards,
+    "lifeguard": lifeguardsDict,
 }
 
 staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
@@ -86,7 +87,7 @@ calculator.calculateSchedule()
 
 earliestTime, latestTime = calculator.calculatePoolOpenTimeRange()
 
-lifeguards = calculator.getLifeguards()
+lifeguards: list[Lifeguard] = calculator.getLifeguards()
 
 scheduleData: dict[Time, list[str]] = {}
 
