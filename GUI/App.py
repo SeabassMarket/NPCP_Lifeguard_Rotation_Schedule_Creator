@@ -2,9 +2,14 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font
+
 from ScheduleFrame import ScheduleFrame
 from LifeguardFrame import LifeguardFrame
+
 from InfoManagers.StaticAppInfo import StaticAppInfo
+from InfoManagers.CalculateSchedule import CalculateSchedule
+
+from GoogleAPICommunicators.GoogleSheetsCommunicator import GSCommunicator
 
 
 # Mother app structure of the whole program
@@ -104,7 +109,7 @@ class App:
         openScheduleButton = ttk.Button(
             self._homeFrame, text="Set Stand Schedule", command=self.openScheduleFrame
         )
-        openScheduleButton.pack(anchor=tk.W, padx=10)
+        openScheduleButton.pack(anchor=tk.W, padx=10, pady=5)
 
         # Open lifeguard button
         openLifeguardButton = ttk.Button(
@@ -113,6 +118,12 @@ class App:
         openLifeguardButton.pack(anchor=tk.W, padx=10, pady=5)
 
         # Open finished schedule button
+        calculateScheduleButton = ttk.Button(
+            self._homeFrame,
+            text="Calculate Schedule",
+            command=self.openCalculatedScheduleFrame,
+        )
+        calculateScheduleButton.pack(anchor=tk.W, padx=10, pady=5)
 
     # Sets up the schedule page with widgets
     def setUpSchedulePage(self):
@@ -135,6 +146,18 @@ class App:
     # Opens up the lifeguard frame
     def openLifeguardFrame(self):
         self._lifeguardFrame.tkraise()
+
+    # Opens up the lifeguard frame
+    def openCalculatedScheduleFrame(self):
+        calculator = CalculateSchedule(self._staticAppInfo)
+        calculator.assignBreaks()
+        calculator.calculateSchedule()
+        calculator.printSchedule()
+
+        gs = GSCommunicator(self._staticAppInfo, calculator)
+        gs.setWorksheet("Lifeguard Schedule", "NPCP_GOOGLE_SHEETS_KEY")
+        gs.writeScheduleToWorksheet()
+        print(f"Schedule uploaded: {gs.getItem('spreadsheet').url}")
 
 
 if __name__ == "__main__":
