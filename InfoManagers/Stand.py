@@ -60,6 +60,12 @@ class Stand:
         # Initialize the count for the amount per interval
         if isinstance(amountPerInterval, int):
             self._amountPerInterval = amountPerInterval
+        elif isinstance(amountPerInterval, str):
+            try:
+                newAmountPerInterval = int(amountPerInterval)
+                self._amountPerInterval = newAmountPerInterval
+            except Exception:
+                pass
         else:
             self._amountPerInterval = 1
 
