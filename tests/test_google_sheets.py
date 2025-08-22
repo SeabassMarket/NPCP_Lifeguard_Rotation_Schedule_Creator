@@ -201,18 +201,12 @@ sheets_service.spreadsheets().batchUpdate(
 
 worksheet.format(
     f"A",
-    {
-        "horizontalAlignment": "RIGHT",
-        "verticalAlignment": "MIDDLE"
-    },
+    {"horizontalAlignment": "RIGHT", "verticalAlignment": "MIDDLE"},
 )
 
 worksheet.format(
     f"{colNumToLetter(len(lifeguards) + 2)}",
-    {
-        "horizontalAlignment": "LEFT",
-        "verticalAlignment": "MIDDLE"
-    },
+    {"horizontalAlignment": "LEFT", "verticalAlignment": "MIDDLE"},
 )
 
 # Format stand columns
@@ -289,7 +283,7 @@ worksheet.format(
         },
         "textRotation": {"angle": 45},
         "horizontalAlignment": "LEFT",
-        "verticalAlignment": "BOTTOM"
+        "verticalAlignment": "BOTTOM",
     },
 )
 
@@ -304,7 +298,7 @@ worksheet.format(
             "left": {"style": "SOLID", "width": 1},
         },
         "horizontalAlignment": "CENTER",
-        "verticalAlignment": "MIDDLE"
+        "verticalAlignment": "MIDDLE",
     },
 )
 
