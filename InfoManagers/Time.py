@@ -43,6 +43,14 @@ class Time:
             self.get12Hour()[1],
         )
 
+    def getStripped12Time(self):
+        timeString = self.get12Time()[:5]
+
+        if timeString[0] == "0":
+            timeString = timeString[1:]
+
+        return timeString
+
     def getAmOrPm(self):
         if self._hour < 12:
             return "AM"
