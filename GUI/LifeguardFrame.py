@@ -278,7 +278,7 @@ class LifeguardFrame:
         )
         bottomFrame.pack(side="top", fill="x", anchor="w", pady=10)
 
-        # Seperate lifeguard data dictionary into different lists
+        # Separate lifeguard data dictionary into different lists
         eventTypeLabels = []
         lifeguardsInfo = []
         invisibleSpacers = []
@@ -311,7 +311,7 @@ class LifeguardFrame:
                 else:
                     secondTime = "end of day"
                 message = (
-                    "Stand "
+                    "Lifeguard "
                     + lifeguard
                     + ": "
                     + lifeguardData[key][lifeguard][0].get12Time()
