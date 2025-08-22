@@ -475,7 +475,7 @@ class EventFrame:
         # Create instruction text
         instructionText = ttk.Label(
             popupFrame,
-            text="Enter event name:",
+            text=f"Enter {self._eventDescriptor} name:",
             foreground=self._staticAppInfo.getColor("Default"),
             background=self._staticAppInfo.getColor(self._frameDescriptor),
             font=self._staticAppInfo.getFont("Default"),
