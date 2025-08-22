@@ -30,7 +30,7 @@ class CalculateSchedule:
 
         # Check data length
         if len(lifeguardData) < 1 or len(standData) < 1:
-            raise CalculaterException("Datat not set")
+            raise CalculaterException("Data not set")
 
         # Create lifeguard objects
         for lifeguardKey in lifeguardData:
@@ -596,6 +596,9 @@ class CalculateSchedule:
         lifeguardsLength = len(lifeguardsDownAtTime)
 
         standsOpen = Stand.getStandNames(self._fillInDownStands)
+
+        if len(standsOpen) < 1:
+            return
 
         for i in range(lifeguardsLength):
             lifeguard = lifeguardsDownAtTime.pop(
