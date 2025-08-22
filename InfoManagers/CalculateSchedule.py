@@ -25,6 +25,13 @@ class CalculateSchedule:
         # Get lifeguardData from staticAppInfo
         lifeguardData = self._staticAppInfo.getEventDataSpecific("lifeguard")
 
+        # Get stand date from staticAppInfo
+        standData = self._staticAppInfo.getEventDataSpecific("stand")
+
+        # Check data length
+        if len(lifeguardData) < 1 or len(standData) < 1:
+            raise CalculaterException("Datat not set")
+
         # Create lifeguard objects
         for lifeguardKey in lifeguardData:
             self._lifeguards: list[Lifeguard] = []
@@ -41,8 +48,6 @@ class CalculateSchedule:
                 )
                 count += 1
 
-        # Get stand date from staticAppInfo
-        standData = self._staticAppInfo.getEventDataSpecific("stand")
         # Up stands
         upStandData = list(standData.values())[0]
         self._upStands = []
@@ -52,7 +57,6 @@ class CalculateSchedule:
                 standType=list(standData.keys())[0],
                 startTime=upStandData[stand][0],
                 endTime=upStandData[stand][1],
-                amountPerInterval=upStandData[stand][2],
             )
             self._upStands.append(newStand)
         # Timely down stands
@@ -1087,7 +1091,9 @@ class CalculateSchedule:
         clusterLength = len(downToUpLifeguards)
 
         if clusterLength < 1:
-            raise CalculaterException("reorganizing: no lifeguards going down to up")
+            raise CalculaterException(
+                f"reorganizing: no lifeguards going down to up at time {currentTime.get12Time()}"
+            )
 
         # Create empty clusters
 
