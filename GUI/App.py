@@ -150,7 +150,6 @@ class App:
     # Opens up the lifeguard frame
     def openCalculatedScheduleFrame(self):
         calculator = CalculateSchedule(self._staticAppInfo)
-        calculator.assignBreaks()
         calculator.calculateSchedule()
         calculator.printSchedule()
 
