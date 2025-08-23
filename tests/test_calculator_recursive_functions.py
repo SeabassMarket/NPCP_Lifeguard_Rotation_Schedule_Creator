@@ -1,10 +1,7 @@
 # import libraries
-import random
-import time
 import tkinter as tk
 
 from InfoManagers.CalculateSchedule import CalculateSchedule
-from InfoManagers.Stand import Stand
 from InfoManagers.StaticAppInfo import StaticAppInfo
 from InfoManagers.Time import Time
 
