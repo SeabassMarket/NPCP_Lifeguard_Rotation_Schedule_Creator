@@ -7,6 +7,7 @@ import pandas as pd
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
 from gspread.exceptions import APIError
+from requests import HTTPError
 
 from InfoManagers.CalculateSchedule import CalculateSchedule
 from InfoManagers.Lifeguard import Lifeguard
@@ -168,7 +169,7 @@ class GSCommunicator:
             self._sheetsService.spreadsheets().batchUpdate(
                 spreadsheetId=self._spreadsheet.id, body={"requests": requests}
             ).execute()
-        except APIError:
+        except APIError or HTTPError:
             raise GSException(
                 "Error while writing to sheet;\n"
                 "API quota might have been reached, or writing may have exceeded grid limits"
