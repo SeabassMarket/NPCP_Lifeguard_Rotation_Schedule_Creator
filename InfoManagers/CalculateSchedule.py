@@ -100,12 +100,82 @@ class CalculateSchedule:
         # Initialize the breaks instance variable
         self._breaks = []
 
-    # Calculate the schedule itself by creating each schedule for each lifeguard
-    def calculateSchedule(self):
+        # Initialize branch time
+        self._branchTime = Time(0, 0)
+
+    def addLifeguard(self, startTime: Time, endTime: Time, name: str):
+        lifeguardIdNums = []
+        for lifeguard in self._lifeguards:
+            lifeguardIdNums.append(lifeguard.getIdNum())
+
+        lifeguardId = 0
+        if len(lifeguardIdNums) > 0:
+            lifeguardId = max(lifeguardIdNums) + 1
+
+        lifeguard = Lifeguard(
+            shiftTimes=[startTime, endTime],
+            name=name,
+            idNum=lifeguardId,
+            staticAppInfo=self._staticAppInfo,
+        )
+        self._lifeguards.append(lifeguard)
+
+    def removeLifeguard(self, name):
+        for i in range(len(self._lifeguards) - 1, -1, -1):
+            lifeguard = self._lifeguards[i]
+
+            if lifeguard.getName() == name:
+                self._lifeguards.pop(i)
+                return
+
+    # TODO: add the methods to add stands as well
+
+    def removeUpStand(self, name):
+        for i in range(len(self._upStands) - 1, -1, -1):
+            stand = self._upStands[i]
+
+            if stand.getName() == name:
+                self._upStands.pop(i)
+                return
+
+    def removeTimelyDownStand(self, name):
+        for i in range(len(self._timelyDownStands) - 1, -1, -1):
+            stand = self._timelyDownStands[i]
+
+            if stand.getName() == name:
+                self._timelyDownStands.pop(i)
+                return
+
+    def removePriorityDownStand(self, name):
+        for i in range(len(self._priorityDownStands) - 1, -1, -1):
+            stand = self._priorityDownStands[i]
+
+            if stand.getName() == name:
+                self._priorityDownStands.pop(i)
+                return
+
+    def removeFillInDownStand(self, name):
+        for i in range(len(self._fillInDownStands) - 1, -1, -1):
+            stand = self._fillInDownStands[i]
+
+            if stand.getName() == name:
+                self._fillInDownStands.pop(i)
+                return
+
+    def calculateSchedule(self, branchTime: Time = Time(0, 0)):
+        self._branchTime = branchTime
+
+        self.resetSchedule()
+        self.assignBreaks()
+        self.calculateStands()
+
+    def calculateStands(self):
         # Get the time range of when the pool is open
-        timeRange = self.calculatePoolOpenTimeRange()
-        earliestTime = timeRange[0]
-        latestTime = timeRange[1]
+        earliestTime, latestTime = self.calculatePoolOpenTimeRange()
+
+        times = [earliestTime.getMinutes(), self._branchTime.getMinutes()]
+
+        earliestTime = Time().setTimeWithMinutes(max(times))
 
         # For each time between the earliest time and the latest time (excluding latest)
         for t in range(
@@ -187,6 +257,10 @@ class CalculateSchedule:
             # Get the time that we are going back until
             timeFurthestBack = lifeguard.getFurthestTimeBackToDisruption(currentTime)
 
+            times = [timeFurthestBack.getMinutes(), self._branchTime.getMinutes()]
+
+            timeFurthestBack = Time().setTimeWithMinutes(max(times))
+
             # Get the time variable that will be used to go backwards
             timeBeingAnalyzed = currentTime.getMinutes()
             while timeBeingAnalyzed >= timeFurthestBack.getMinutes():
@@ -238,6 +312,13 @@ class CalculateSchedule:
                         furthestBackTime = lifeguardsWorkingAtTime[
                             i
                         ].getFurthestTimeBackToDisruption(currentTime)
+
+                        times = [
+                            furthestBackTime.getMinutes(),
+                            self._branchTime.getMinutes(),
+                        ]
+
+                        furthestBackTime = Time().setTimeWithMinutes(max(times))
 
                         # Check to see if the guard at this index has 0 up stand intervals at this time and also that a
                         # swap would be viable. A swap is not viable if the time is less than the furthest back time
@@ -847,10 +928,14 @@ class CalculateSchedule:
 
         earliestTime, latestTime = self.calculatePoolOpenTimeRange()
 
+        times = [earliestTime.getMinutes(), self._branchTime.getMinutes()]
+
+        earliestTime = Time().setTimeWithMinutes(max(times))
+
         # Store the up stands found in the schedule
         timeToUpStandChoices = {}
         for t in range(
-            earliestTime.getMinutes(),
+            earliestTime.getMinutes() - self._staticAppInfo.getTimeInterval(),
             latestTime.getMinutes(),
             self._staticAppInfo.getTimeInterval(),
         ):
@@ -862,10 +947,10 @@ class CalculateSchedule:
 
         # Reset each lifeguard so each up stand is just the up stand code
         for lifeguard in self._lifeguards:
-            lifeguard.convertScheduleToUp(self._upStands)
+            lifeguard.convertScheduleToUp(self._upStands, self._branchTime)
 
         # Reorganize for each time of day
-        for i in range(0, len(timeToUpStandChoices)):
+        for i in range(1, len(timeToUpStandChoices)):
             """
             For each time in the day, reorganize the lifeguards according to the pretty + backup algorithms.
             
@@ -883,9 +968,6 @@ class CalculateSchedule:
         self, timeToUpStandChoices: dict[Time, list[str]], index: int
     ):
         # Checks
-
-        if index >= len(timeToUpStandChoices):
-            return
 
         currentStandChoices = list(timeToUpStandChoices.values())[index].copy()
         if len(currentStandChoices) < 1:
@@ -1555,24 +1637,27 @@ class CalculateSchedule:
             shiftStartAndEnds[minIndex] = tempList
 
     # Assigns the created breaks to lifeguards. The parameter is for if we are using hardcoded breaks
-    def assignBreaks(self, breaks=None):
-        # Automatically calculate the breaks if breaks are not explicitly given
-        if breaks is None:
+    def assignBreaks(self, automatic=True):
+        # Automatically calculate the breaks
+        if automatic:
             self.calculateBreaks()
-        else:
-            self._breaks = breaks
 
         # Get the lifeguards that actually need breaks (NOTE: IS SORTED)
-        lifeguardsWithBreaks = self.getLifeguardsWithBreaks()
+        lifeguardsWithBreaks = self.getLifeguardsNeedingBreaks()
 
         # Create a list for lifeguards if they just didn't get a break
         lifeguardsNeedingBreaks = []
 
         # For each lifeguard, assign the breaks
         for i in range(0, len(lifeguardsWithBreaks)):
-            timeRange = lifeguardsWithBreaks[i].calculateRangeOfPossibleBreakTimes()
-            earliestTime = timeRange[0]
-            latestTime = timeRange[1]
+            earliestTime, latestTime = lifeguardsWithBreaks[
+                i
+            ].calculateRangeOfPossibleBreakTimes()
+
+            times = [earliestTime.getMinutes(), self._branchTime.getMinutes()]
+
+            earliestTime = Time().setTimeWithMinutes(max(times))
+
             if self._breaks[i].getIsInBetweenInclusive(earliestTime, latestTime):
                 lifeguardsWithBreaks[i].addBreakTime(self._breaks[i])
             else:
@@ -1597,8 +1682,12 @@ class CalculateSchedule:
             # Keep on generating times until the time with the highest ratio is within the break range for this specific
             # lifeguard
             # Get the two times for the range
-            earliestTime = lifeguard.calculateRangeOfPossibleBreakTimes()[0]
-            latestTime = lifeguard.calculateRangeOfPossibleBreakTimes()[1]
+            earliestTime, latestTime = lifeguard.calculateRangeOfPossibleBreakTimes()
+
+            times = [earliestTime.getMinutes(), self._branchTime.getMinutes()]
+
+            earliestTime = Time().setTimeWithMinutes(max(times))
+
             # While it is still invalid
             while not timeWithHighestRatio.getIsInBetweenInclusive(
                 earliestTime, latestTime
@@ -1627,7 +1716,7 @@ class CalculateSchedule:
         )
 
         # Create a new list with the lifeguards to make sure that they all actually need breaks
-        lifeguardsWithBreaks = self.getLifeguardsWithBreaks()
+        lifeguardsWithBreaks = self.getLifeguardsNeedingBreaks()
 
         # For one iteration per lifeguard
         for i in range(0, len(lifeguardsWithBreaks)):
@@ -1808,13 +1897,13 @@ class CalculateSchedule:
         return lifeguardsWorkingAtTime
 
     # Returns a list of people who actually have breaks in sorted order
-    def getLifeguardsWithBreaks(self):
+    def getLifeguardsNeedingBreaks(self):
         self.sortLifeguards()
-        lifeguardsWithBreaks = []
+        lifeguardsNeedingBreaks = []
         for lifeguard in self._lifeguards:
-            if lifeguard.getNumBreaks() > 0:
-                lifeguardsWithBreaks.append(lifeguard)
-        return lifeguardsWithBreaks
+            if lifeguard.getNumBreaks() > 0 and len(lifeguard.getBreakTimes()) < 1:
+                lifeguardsNeedingBreaks.append(lifeguard)
+        return lifeguardsNeedingBreaks
 
     # Returns the time range between when the first lifeguard enters to when the last lifeguard leaves
     def calculatePoolOpenTimeRange(self) -> tuple[Time, Time]:
@@ -1915,7 +2004,7 @@ class CalculateSchedule:
                 elif stand == self._staticAppInfo.getBreakCode():
                     stand = "\033[93m YYY\033[0m"
                 elif stand == self._staticAppInfo.getEmptyCode():
-                    stand = "\033[38;5;208m  NA\033[0m"
+                    stand = "\033[38;2;160;82;45m  NA\033[0m"
                 elif (
                     stand in currentUpStands
                     and stand not in lastUpStands
@@ -1938,4 +2027,4 @@ class CalculateSchedule:
     # Resets the schedule
     def resetSchedule(self):
         for lifeguard in self._lifeguards:
-            lifeguard.resetLifeguardSchedule()
+            lifeguard.resetLifeguardSchedule(self._branchTime)
