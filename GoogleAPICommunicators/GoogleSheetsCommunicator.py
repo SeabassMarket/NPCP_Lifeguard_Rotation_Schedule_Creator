@@ -115,8 +115,11 @@ class GSCommunicator:
         # Replace None with empty strings for cleaner look
         df = df.fillna("")
 
-        # set headers to lifeguards
-        df.columns = self._calculator.getLifeguardNames()
+        # Set headers to lifeguard names
+        lifeguardNames = self._calculator.getLifeguardNames()
+        for i in range(len(lifeguardNames)):
+            lifeguardNames[i] = f"{i + 1}. {lifeguardNames[i]}"
+        df.columns = lifeguardNames
 
         return df, lifeguards, scheduleData
 
