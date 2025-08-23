@@ -71,16 +71,8 @@ staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
 
 """END OF HARDCODING, BEGINNING OF DEVELOPING ALGORITHM"""
 
-
-def calculateSchedule():
-    calc = CalculateSchedule(staticAppInfo=staticAppInfo)
-    calc.resetSchedule()
-    calc.assignBreaks()
-    calc.calculateStands()
-    return calc
-
-
-calculator = calculateSchedule()
+calculator = CalculateSchedule(staticAppInfo)
+calculator.calculateSchedule()
 calculator.printSchedule()
 
 blockLengthToCount: dict[int, int] = {}

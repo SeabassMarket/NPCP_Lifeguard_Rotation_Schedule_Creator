@@ -74,11 +74,10 @@ staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
 # Calculate Schedule
 
 calculator = CalculateSchedule(staticAppInfo)
-calculator.assignBreaks()
-calculator.calculateStands()
+calculator.calculateSchedule()
 
 # Use GSCommunicator
-gs = GSCommunicator(staticAppInfo, calculator, 2, 2)
+gs = GSCommunicator(staticAppInfo, calculator, 3, 1)
 
 gs.setWorksheet("Lifeguard Schedule", "NPCP_GOOGLE_SHEETS_KEY")
 gs.writeScheduleToWorksheet()

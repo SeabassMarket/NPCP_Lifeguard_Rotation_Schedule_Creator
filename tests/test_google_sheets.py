@@ -80,8 +80,7 @@ staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
 # Calculate Schedule
 
 calculator = CalculateSchedule(staticAppInfo)
-calculator.assignBreaks()
-calculator.calculateStands()
+calculator.calculateSchedule()
 
 # Create schedule dictionary
 

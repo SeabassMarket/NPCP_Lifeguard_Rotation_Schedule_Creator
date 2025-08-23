@@ -71,9 +71,7 @@ staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
 
 def calculateSchedule():
     calc = CalculateSchedule(staticAppInfo=staticAppInfo)
-    calc.resetSchedule()
-    calc.assignBreaks()
-    calc.calculateStands()
+    calc.calculateSchedule()
     return calc
 
 

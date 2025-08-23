@@ -68,15 +68,7 @@ lifeguardData = {
 staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
 
 """END OF HARDCODING, BEGINNING OF DEVELOPING ALGORITHM"""
-
-
-def calculateSchedule():
-    calc = CalculateSchedule(staticAppInfo=staticAppInfo)
-    calc.resetSchedule()
-    calc.assignBreaks()
-    calc.calculateStands()
-    return calc
-
+calculator = CalculateSchedule(staticAppInfo)
 
 TESTCOUNT = 100
 
@@ -85,6 +77,6 @@ start = time.time()
 print("starting calculation")
 while count <= TESTCOUNT:
     print(f"Test number {count} at {time.time() - start}")
-    calculateSchedule()
+    calculator.calculateSchedule()
     count += 1
 print(f"Test ran for {time.time() - start} seconds to run {TESTCOUNT} calculation(s)")
