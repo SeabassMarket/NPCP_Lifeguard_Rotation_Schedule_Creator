@@ -440,19 +440,24 @@ class Lifeguard:
         return self._numBreaks
 
     # Resets the lifeguard
-    def resetLifeguardSchedule(self):
-        self._breakTimes = []
+    def resetLifeguardSchedule(self, resetTime: Time = Time(0, 0)):
+        preserveBreak = False
 
-        # Reset the schedule dictionary
-        self._schedule = dict()
-        for t in range(
-            self._startTime.getMinutes(),
-            self._endTime.getMinutes(),
-            self._staticAppInfo.getTimeInterval(),
-        ):
-            # Create the time object
-            thisTime = Time().setTimeWithMinutes(t)
-            self._schedule[thisTime] = self._staticAppInfo.getEmptyCode()
+        breakTime = None
+        if len(self._breakTimes) > 0:
+            breakTime = self._breakTimes[0]
+
+        if breakTime is not None and breakTime.getMinutes() < resetTime.getMinutes():
+            preserveBreak = True
+
+        for scheduleTime in self._schedule:
+            if scheduleTime.getMinutes() >= resetTime.getMinutes():
+                self._schedule[scheduleTime] = self._staticAppInfo.getEmptyCode()
+
+        if preserveBreak:
+            self.updateBreaks()
+        else:
+            self._breakTimes = []
 
         self.resetRandomChance()
 
@@ -481,11 +486,14 @@ class Lifeguard:
 
         return count
 
-    def convertScheduleToUp(self, upStands: list[Stand]):
+    def convertScheduleToUp(self, upStands: list[Stand], branchTime: Time):
         upStandNames = Stand.getStandNames(upStands)
 
         for scheduleTime in self._schedule:
-            if self._schedule[scheduleTime] in upStandNames:
+            if (
+                scheduleTime.getMinutes() >= branchTime.getMinutes()
+                and self._schedule[scheduleTime] in upStandNames
+            ):
                 self._schedule[scheduleTime] = self._staticAppInfo.getUpStandCode()
 
     def getIsUpOnStand(self, givenTime: Time, upStands: list[Stand]) -> bool:
