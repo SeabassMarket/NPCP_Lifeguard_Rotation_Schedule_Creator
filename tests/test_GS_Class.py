@@ -75,7 +75,7 @@ staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
 
 calculator = CalculateSchedule(staticAppInfo)
 calculator.assignBreaks()
-calculator.calculateSchedule()
+calculator.calculateStands()
 
 # Use GSCommunicator
 gs = GSCommunicator(staticAppInfo, calculator, 2, 2)

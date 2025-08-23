@@ -74,7 +74,7 @@ def calculateSchedule():
     calc = CalculateSchedule(staticAppInfo=staticAppInfo)
     calc.resetSchedule()
     calc.assignBreaks()
-    calc.calculateSchedule()
+    calc.calculateStands()
     return calc
 
 
