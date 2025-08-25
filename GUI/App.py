@@ -9,7 +9,11 @@ from LifeguardFrame import LifeguardFrame
 from InfoManagers.StaticAppInfo import StaticAppInfo
 from InfoManagers.CalculateSchedule import CalculateSchedule, CalculaterException
 
-from GoogleAPICommunicators.GoogleSheetsCommunicator import GSCommunicator, WorksheetException, GSException
+from GoogleAPICommunicators.GoogleSheetsCommunicator import (
+    GSCommunicator,
+    WorksheetException,
+    GSException,
+)
 
 
 # Mother app structure of the whole program
@@ -166,9 +170,7 @@ class App:
         popup.title("Calculate schedule")
         popup.geometry("300x200+1000+400")
 
-        popupFrame = tk.Frame(
-            popup, background=self._staticAppInfo.getColor("Home")
-        )
+        popupFrame = tk.Frame(popup, background=self._staticAppInfo.getColor("Home"))
         popupFrame.pack(fill=tk.BOTH, expand=True)
 
         # Label
@@ -222,13 +224,13 @@ class App:
 
         # Create error text
         errorText = ttk.Label(
-                popupFrame,
-                text="",
-                foreground=self._staticAppInfo.getColor("Error"),
-                background=self._staticAppInfo.getColor("homet"),
-                font=self._staticAppInfo.getFont("error"),
-                anchor="w",
-            )
+            popupFrame,
+            text="",
+            foreground=self._staticAppInfo.getColor("Error"),
+            background=self._staticAppInfo.getColor("homet"),
+            font=self._staticAppInfo.getFont("error"),
+            anchor="w",
+        )
         errorText.pack(pady=3, padx=5, anchor="w")
 
         # Check to see if the popup has been destroyed
@@ -244,6 +246,7 @@ class App:
 
         # Re-check
         self._root.after(100, lambda: self.checkPopup(popup))
+
 
 if __name__ == "__main__":
     App()
