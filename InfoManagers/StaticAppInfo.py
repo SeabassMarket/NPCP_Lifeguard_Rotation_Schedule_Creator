@@ -158,7 +158,7 @@ class StaticAppInfo:
         return self._buttonsToDisable
 
     # Adds a list of buttons to the buttons to disable list
-    def appendButtonListToDisable(self, buttons):
+    def appendButtonListToDisable(self, buttons: list):
         for button in buttons:
             self.appendButtonToDisable(button)
 
