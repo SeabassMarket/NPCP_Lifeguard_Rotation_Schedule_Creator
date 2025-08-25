@@ -17,11 +17,10 @@ upStands = {
     "E": [Time(hour=11, minute=0), Time(hour=20, minute=0), 1],
     "H": [Time(hour=11, minute=0), Time(hour=20, minute=0), 1],
     "K": [Time(hour=11, minute=0), Time(hour=20, minute=0), 1],
-    "A": [Time(hour=12, minute=0), Time(hour=20, minute=0), 1],
-    "B": [Time(hour=12, minute=0), Time(hour=20, minute=0), 1],
-    "I": [Time(hour=13, minute=0), Time(hour=19, minute=0), 1],
-    "T": [Time(hour=13, minute=0), Time(hour=19, minute=0), 1],
-    "S": [Time(hour=13, minute=0), Time(hour=19, minute=0), 1],
+    "A": [Time(hour=11, minute=0), Time(hour=20, minute=0), 1],
+    "B": [Time(hour=11, minute=0), Time(hour=20, minute=0), 1],
+    "I": [Time(hour=12, minute=40), Time(hour=19, minute=0), 1],
+    "J": [Time(hour=13, minute=0), Time(hour=19, minute=0), 1],
 }
 timelyDownStands = {
     "SU": [Time(hour=10, minute=40), Time(hour=11, minute=0), 10],
@@ -48,19 +47,24 @@ staticAppInfo.setEventDataSpecific(standData, eventDescriptor="stand")
 
 # Create information for the stands
 lifeguards = {
-    "EVE": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
-    "CHRISTIAN": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
-    "CLARISSA": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
-    "TY": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
-    "LARISSA": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
-    "MEGAN": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
-    "JEFF": [Time(hour=12, minute=0), Time(hour=20, minute=0)],
-    "KYLE": [Time(hour=11, minute=40), Time(hour=19, minute=40)],
-    "ELLA": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
-    "CARYS": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
-    "ROWAN": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
-    "CONNIE": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
-    "GRAYSON": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
+    "Eve": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
+    "Megan": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
+    "Mia": [Time(hour=10, minute=40), Time(hour=13, minute=40)],
+    "Brynn": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
+    "Connie": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
+    "Rowan": [Time(hour=11, minute=0), Time(hour=15, minute=0)],
+    "Sophie": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
+    "Ty": [Time(hour=11, minute=0), Time(hour=15, minute=0)],
+    "Anik": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
+    "Grayson": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
+    "Larissa": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
+    "Sebastian": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
+    "Shalen": [Time(hour=13, minute=0), Time(hour=17, minute=40)],
+    "Christian": [Time(hour=15, minute=0), Time(hour=17, minute=0)],
+    "Alex": [Time(hour=17, minute=40), Time(hour=21, minute=0)],
+    "Penny": [Time(hour=17, minute=0), Time(hour=19, minute=0)],
+    "Milla": [Time(hour=17, minute=40), Time(hour=21, minute=0)],
+    "Rian": [Time(hour=17, minute=40), Time(hour=20, minute=40)],
 }
 
 lifeguardData = {
@@ -100,6 +104,9 @@ sortedBlockLengthKeys = sorted(list(blockLengthToCount.keys()))
 for blockLength in sortedBlockLengthKeys:
     count = blockLengthToCount[blockLength]
     print(f"There were {count} blocks with length {blockLength}")
+
+print("Continue?")
+input()
 
 # Use GSCommunicator
 gs = GSCommunicator(staticAppInfo, calculator, 3, 1)
