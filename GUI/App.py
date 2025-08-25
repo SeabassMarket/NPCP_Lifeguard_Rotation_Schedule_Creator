@@ -7,9 +7,9 @@ from ScheduleFrame import ScheduleFrame
 from LifeguardFrame import LifeguardFrame
 
 from InfoManagers.StaticAppInfo import StaticAppInfo
-from InfoManagers.CalculateSchedule import CalculateSchedule
+from InfoManagers.CalculateSchedule import CalculateSchedule, CalculaterException
 
-from GoogleAPICommunicators.GoogleSheetsCommunicator import GSCommunicator
+from GoogleAPICommunicators.GoogleSheetsCommunicator import GSCommunicator, WorksheetException, GSException
 
 
 # Mother app structure of the whole program
@@ -105,17 +105,22 @@ class App:
         )
         homeText.pack(side=tk.TOP, anchor=tk.W, padx=5)
 
+        # Buttons list
+        buttons = []
+
         # Open stand schedule button
         openScheduleButton = ttk.Button(
             self._homeFrame, text="Set Stand Schedule", command=self.openScheduleFrame
         )
         openScheduleButton.pack(anchor=tk.W, padx=10, pady=5)
+        buttons.append(openScheduleButton)
 
         # Open lifeguard button
         openLifeguardButton = ttk.Button(
             self._homeFrame, text="Set Lifeguards", command=self.openLifeguardFrame
         )
         openLifeguardButton.pack(anchor=tk.W, padx=10, pady=5)
+        buttons.append(openLifeguardButton)
 
         # Open finished schedule button
         calculateScheduleButton = ttk.Button(
@@ -124,6 +129,10 @@ class App:
             command=self.openCalculatedScheduleFrame,
         )
         calculateScheduleButton.pack(anchor=tk.W, padx=10, pady=5)
+        buttons.append(calculateScheduleButton)
+
+        # Add buttons to the list of buttons to disable
+        self._staticAppInfo.appendButtonListToDisable(buttons)
 
     # Sets up the schedule page with widgets
     def setUpSchedulePage(self):
@@ -149,15 +158,92 @@ class App:
 
     # Opens up the lifeguard frame
     def openCalculatedScheduleFrame(self):
-        calculator = CalculateSchedule(self._staticAppInfo)
-        calculator.calculateSchedule()
-        calculator.printSchedule()
+        # Disable buttons
+        self._staticAppInfo.disableButtons()
 
-        gs = GSCommunicator(self._staticAppInfo, calculator)
-        gs.setWorksheet("Lifeguard Schedule", "NPCP_GOOGLE_SHEETS_KEY")
-        gs.writeScheduleToWorksheet()
-        print(f"Schedule uploaded: {gs.getItem('spreadsheet').url}")
+        # Create a new popup window
+        popup = tk.Toplevel(self._root)
+        popup.title("Calculate schedule")
+        popup.geometry("300x200+1000+400")
 
+        popupFrame = tk.Frame(
+            popup, background=self._staticAppInfo.getColor("Home")
+        )
+        popupFrame.pack(fill=tk.BOTH, expand=True)
+
+        # Label
+        label = tk.Label(
+            popupFrame,
+            text="Calculate Schedule:",
+            background=self._staticAppInfo.getColor("Home"),
+            font=self._staticAppInfo.getFont("Default"),
+        )
+        label.pack(pady=3, padx=5, anchor="w")
+
+        # Create event entry
+        entry = ttk.Entry(popupFrame, font=self._staticAppInfo.getFont("entry"))
+        entry.pack(pady=3, padx=5, anchor="w")
+        # Bind the enter action on the keyboard to adding the entry
+        entry.bind(
+            "<Return>",
+            lambda event,
+            i=popupFrame,
+            entryField=entry,
+            body=popupFrame,
+            frame=popupFrame: on_submit,
+        )
+
+        # Function when submit is clicked
+        def on_submit():
+            try:
+                userInput = entry.get()
+
+                calculator = CalculateSchedule(self._staticAppInfo)
+                calculator.calculateSchedule()
+                calculator.printSchedule()
+
+                gs = GSCommunicator(self._staticAppInfo, calculator)
+                gs.setWorksheet(userInput, "NPCP_GOOGLE_SHEETS_KEY")
+                gs.writeScheduleToWorksheet()
+                print(f"Schedule uploaded: {gs.getItem('spreadsheet').url}")
+            except CalculaterException as e:
+                errMessage = str(e)
+                errorText.configure(text=errMessage)
+            except WorksheetException as e:
+                errMessage = str(e)
+                errorText.configure(text=errMessage)
+            except GSException as e:
+                errMessage = str(e)
+                errorText.configure(text=errMessage)
+
+        # Submit button
+        submit_btn = tk.Button(popupFrame, text="Submit", command=on_submit)
+        submit_btn.pack(pady=3, padx=5, anchor="w")
+
+        # Create error text
+        errorText = ttk.Label(
+                popupFrame,
+                text="",
+                foreground=self._staticAppInfo.getColor("Error"),
+                background=self._staticAppInfo.getColor("homet"),
+                font=self._staticAppInfo.getFont("error"),
+                anchor="w",
+            )
+        errorText.pack(pady=3, padx=5, anchor="w")
+
+        # Check to see if the popup has been destroyed
+        self.checkPopup(popup)
+
+    # Checks to see if the popup has been destroyed so it can reactivate the buttons
+    def checkPopup(self, popup):
+        # Check to see if popup exists and is an object
+        if popup and not popup.winfo_exists():
+            # Turns all the buttons back on
+            self._staticAppInfo.enableButtons()
+            popup = None
+
+        # Re-check
+        self._root.after(100, lambda: self.checkPopup(popup))
 
 if __name__ == "__main__":
     App()
