@@ -179,11 +179,20 @@ class App:
         # Label
         label = tk.Label(
             popupFrame,
-            text="Calculate Schedule:",
+            text="Calculate Schedule",
+            background=self._staticAppInfo.getColor("Home"),
+            font=self._staticAppInfo.getFont("standard"),
+        )
+        label.pack(pady=3, padx=5, anchor="w")
+
+        # Enter label
+        enterLabel = tk.Label(
+            popupFrame,
+            text="Enter spreadsheet name here:",
             background=self._staticAppInfo.getColor("Home"),
             font=self._staticAppInfo.getFont("Default"),
         )
-        label.pack(pady=3, padx=5, anchor="w")
+        enterLabel.pack(pady=3, padx=5, anchor="w")
 
         # Create event entry
         entry = ttk.Entry(popupFrame, font=self._staticAppInfo.getFont("entry"))
