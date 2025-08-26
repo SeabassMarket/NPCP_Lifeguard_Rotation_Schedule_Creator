@@ -1,7 +1,7 @@
 # import libraries
 import tkinter as tk
 from tkinter import ttk
-from EventFrame import EventFrame
+from GUI.EventFrame import EventFrame
 from InfoManagers.StaticAppInfo import StaticAppInfo
 from InfoManagers.Time import Time
 

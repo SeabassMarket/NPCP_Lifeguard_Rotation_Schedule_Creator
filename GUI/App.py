@@ -3,8 +3,8 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import font
 
-from ScheduleFrame import ScheduleFrame
-from LifeguardFrame import LifeguardFrame
+from GUI.ScheduleFrame import ScheduleFrame
+from GUI.LifeguardFrame import LifeguardFrame
 
 from InfoManagers.StaticAppInfo import StaticAppInfo
 from InfoManagers.CalculateSchedule import CalculateSchedule, CalculaterException
@@ -296,7 +296,3 @@ class App:
 
         # Re-check
         self._root.after(100, lambda: self.checkPopup(popup))
-
-
-if __name__ == "__main__":
-    App()
