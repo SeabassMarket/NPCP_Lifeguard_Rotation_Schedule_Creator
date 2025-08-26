@@ -9,6 +9,8 @@ from LifeguardFrame import LifeguardFrame
 from InfoManagers.StaticAppInfo import StaticAppInfo
 from InfoManagers.CalculateSchedule import CalculateSchedule, CalculaterException
 
+import webbrowser
+
 from GoogleAPICommunicators.GoogleSheetsCommunicator import (
     GSCommunicator,
     WorksheetException,
@@ -43,6 +45,7 @@ class App:
         self._staticAppInfo.addColor(name="lifeguard", newColor="#f25555")
         self._staticAppInfo.addColor(name="lifeguard", newColor="#f25555")
         self._staticAppInfo.addColor(name="redError", newColor="#700000")
+        self._staticAppInfo.addColor(name="link", newColor="#00008B")
 
         # Create fonts:
         self._staticAppInfo.addFont(
@@ -168,7 +171,7 @@ class App:
         # Create a new popup window
         popup = tk.Toplevel(self._root)
         popup.title("Calculate schedule")
-        popup.geometry("300x200+1000+400")
+        popup.geometry("500x400+900+400")
 
         popupFrame = tk.Frame(popup, background=self._staticAppInfo.getColor("Home"))
         popupFrame.pack(fill=tk.BOTH, expand=True)
@@ -198,25 +201,61 @@ class App:
         # Function when submit is clicked
         def on_submit():
             try:
+                submit_btn.config(state=tk.DISABLED)
+
                 userInput = entry.get()
+
+                link.configure(text="")
+                errorText.configure(
+                    text="Calculating schedule...",
+                    foreground=self._staticAppInfo.getColor("subtext"),
+                )
+                self._root.update()
 
                 calculator = CalculateSchedule(self._staticAppInfo)
                 calculator.calculateSchedule()
-                calculator.printSchedule()
+
+                errorText.configure(
+                    text="Writing schedule to spreadsheet...",
+                    foreground=self._staticAppInfo.getColor("subtext"),
+                )
+                self._root.update()
 
                 gs = GSCommunicator(self._staticAppInfo, calculator)
                 gs.setWorksheet(userInput, "NPCP_GOOGLE_SHEETS_KEY")
                 gs.writeScheduleToWorksheet()
-                print(f"Schedule uploaded: {gs.getItem('spreadsheet').url}")
+
+                errorText.configure(
+                    text=f"Done! Spreadsheet uploaded:\n",
+                    foreground=self._staticAppInfo.getColor("subtext"),
+                )
+                link.configure(text="Click here!")
+                link.bind(
+                    "<Button-1>",
+                    lambda e: webbrowser.open(gs.getItem("spreadsheet").url),
+                )
+                self._root.update()
             except CalculaterException as e:
                 errMessage = str(e)
-                errorText.configure(text=errMessage)
+                errorText.configure(
+                    text=f"Error while calculating:\n{errMessage}",
+                    foreground=self._staticAppInfo.getColor("Error"),
+                )
             except WorksheetException as e:
                 errMessage = str(e)
-                errorText.configure(text=errMessage)
+                errorText.configure(
+                    text=f"Error while setting spreadsheet:\n{errMessage}",
+                    foreground=self._staticAppInfo.getColor("Error"),
+                )
             except GSException as e:
                 errMessage = str(e)
-                errorText.configure(text=errMessage)
+                errorText.configure(
+                    text=f"Error while attempting to connect/write\n"
+                    f"to spreadsheet:\n{errMessage}",
+                    foreground=self._staticAppInfo.getColor("Error"),
+                )
+
+            submit_btn.config(state=tk.NORMAL)
 
         # Submit button
         submit_btn = tk.Button(popupFrame, text="Submit", command=on_submit)
@@ -226,12 +265,23 @@ class App:
         errorText = ttk.Label(
             popupFrame,
             text="",
-            foreground=self._staticAppInfo.getColor("Error"),
-            background=self._staticAppInfo.getColor("homet"),
+            foreground=self._staticAppInfo.getColor("subtext"),
+            background=self._staticAppInfo.getColor("home"),
             font=self._staticAppInfo.getFont("error"),
             anchor="w",
         )
         errorText.pack(pady=3, padx=5, anchor="w")
+
+        # Create link
+        link = ttk.Label(
+            popupFrame,
+            text="",
+            foreground=self._staticAppInfo.getColor("link"),
+            background=self._staticAppInfo.getColor("home"),
+            font=self._staticAppInfo.getFont("subtext"),
+            cursor="hand2",
+        )
+        link.pack(pady=3, padx=5, anchor="w")
 
         # Check to see if the popup has been destroyed
         self.checkPopup(popup)
