@@ -141,7 +141,7 @@ class GSCommunicator:
             )
             self._sheetsService = build("sheets", "v4", credentials=creds)
         except Exception:
-            raise WorksheetException("Error setting worksheet")
+            raise WorksheetException("worksheet not found, check name")
 
     def writeScheduleToWorksheet(self):
         if (
@@ -172,7 +172,8 @@ class GSCommunicator:
         except APIError or HTTPError:
             raise GSException(
                 "Error while writing to sheet;\n"
-                "API quota might have been reached, or writing may have exceeded grid limits"
+                "API quota might have been reached, or writing may have\n"
+                "exceeded grid limits"
             )
         except Exception:
             raise Exception()
