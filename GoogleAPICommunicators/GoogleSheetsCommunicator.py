@@ -128,10 +128,15 @@ class GSCommunicator:
         try:
             # Get credentials
             self._credentialsFile = os.getenv(credentialsEnvVar)
+            if self._credentialsFile is None:
+                raise WorksheetException("Environment variable not set")
             gc = gspread.service_account(filename=self._credentialsFile)
 
             # Open spreadsheet
-            self._spreadsheet = gc.open(spreadsheetName)
+            try:
+                self._spreadsheet = gc.open(spreadsheetName)
+            except Exception:
+                raise WorksheetException("worksheet not found, check name")
             self._worksheet = self._spreadsheet.sheet1
 
             # Set sheetsService
@@ -140,8 +145,8 @@ class GSCommunicator:
                 scopes=["https://www.googleapis.com/auth/spreadsheets"],
             )
             self._sheetsService = build("sheets", "v4", credentials=creds)
-        except Exception:
-            raise WorksheetException("worksheet not found, check name")
+        except Exception as e:
+            raise WorksheetException(str(e))
 
     def writeScheduleToWorksheet(self):
         if (
