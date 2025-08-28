@@ -85,7 +85,7 @@ print(f"Schedule uploaded: {gs.getItem('spreadsheet').url}")
 print()
 
 # Oh, no! Connie has to go home at an unexpected time! But we're ok
-calculator.removeLifeguard("CONNIE")
+calculator.getLifeguards().pop(11)
 calculator.calculateSchedule(Time(16, 20))
 calculator.printSchedule()
 
