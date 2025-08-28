@@ -230,7 +230,7 @@ class App:
                 )
                 self._root.update()
 
-                gs = GSCommunicator(self._staticAppInfo, calculator)
+                gs = GSCommunicator(self._staticAppInfo, calculator, 3, 1)
                 gs.setWorksheet(userInput, "NPCP_GOOGLE_SHEETS_KEY")
                 gs.writeScheduleToWorksheet()
 
