@@ -1,9 +1,9 @@
 # import libraries
 import tkinter as tk
 
-from InfoManagers.CalculateSchedule import CalculateSchedule
-from InfoManagers.StaticAppInfo import StaticAppInfo
-from InfoManagers.Time import Time
+from ..InfoManagers.CalculateSchedule import CalculateSchedule
+from ..InfoManagers.StaticAppInfo import StaticAppInfo
+from ..InfoManagers.Time import Time
 
 """THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION   """
 # Create static app info

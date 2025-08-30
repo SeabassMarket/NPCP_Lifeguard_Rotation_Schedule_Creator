@@ -1,6 +1,6 @@
 # import libraries
-from InfoManagers.Time import Time
-from InfoManagers.Stand import Stand
+from .Time import Time
+from .Stand import Stand
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font

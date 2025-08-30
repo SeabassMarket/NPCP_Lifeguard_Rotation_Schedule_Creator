@@ -1,11 +1,14 @@
 # import libraries
 import tkinter as tk
 
-from InfoManagers.CalculateSchedule import CalculateSchedule
-from InfoManagers.StaticAppInfo import StaticAppInfo
-from InfoManagers.Time import Time
+from ..InfoManagers.CalculateSchedule import CalculateSchedule
+from ..InfoManagers.StaticAppInfo import StaticAppInfo
+from ..InfoManagers.Time import Time
 
-"""THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION   """
+from ..GoogleAPICommunicators.GoogleSheetsCommunicator import GSCommunicator
+
+"""THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION"""
+
 # Create static app info
 staticAppInfo = StaticAppInfo(tk.Tk())
 
@@ -44,7 +47,7 @@ standData = {
 staticAppInfo.setEventDataSpecific(standData, eventDescriptor="stand")
 
 # Create information for the stands
-lifeguards = {
+lifeguardsDict = {
     "1": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
     "2": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
     "3": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
@@ -61,60 +64,21 @@ lifeguards = {
 }
 
 lifeguardData = {
-    "lifeguard": lifeguards,
+    "lifeguard": lifeguardsDict,
 }
 
 staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
 
 """END OF HARDCODING, BEGINNING OF DEVELOPING ALGORITHM"""
 
+# Calculate Schedule
+
 calculator = CalculateSchedule(staticAppInfo)
+calculator.calculateSchedule()
 
-values = [
-    [4, 8, 1, 3],
-    [9, 1, 4, 2],
-    [3, 2, 4],
-    [8, 4, 9, 11],
-    [3, 10, 7, 5, 8],
-]
+# Use GSCommunicator
+gs = GSCommunicator(staticAppInfo, calculator, 3, 1)
 
-options = calculator.recursivelyGenerateRearrangementPermutations(values)
-staticAppInfo.printRecursivelyLongDictionary(options)
-print()
-optionsList = calculator.recursivelyInterpretGeneratedDictionary(options)
-for value in optionsList:
-    print(value)
-
-print()
-
-
-checks = 0
-
-
-def listsAreEqual(list1, list2):
-    global checks
-
-    result = True
-    for i in range(0, len(list1)):
-        checks += 1
-        if list1[i] != list2[i]:
-            result = False
-    return result
-
-
-duplicates = False
-for n in range(0, len(optionsList)):
-    for k in range(0, len(optionsList)):
-        if k != n:
-            if listsAreEqual(optionsList[n], optionsList[k]):
-                duplicates = True
-
-print("Values Tested:")
-for valueList in values:
-    print(valueList)
-
-print()
-
-print(f"Duplicates? {duplicates}")
-print(f"Checks performed: {checks}")
-print(len(optionsList), "possible permutations generated")
+gs.setWorksheet("Lifeguard Schedule", "NPCP_GOOGLE_SHEETS_KEY")
+gs.writeScheduleToWorksheet()
+print(f"Schedule uploaded: {gs.getItem('spreadsheet').url}")

@@ -1,9 +1,9 @@
 # import libraries
-from InfoManagers.Lifeguard import Lifeguard
+from .Lifeguard import Lifeguard
 import random
-from InfoManagers.Stand import Stand
-from InfoManagers.StaticAppInfo import StaticAppInfo
-from InfoManagers.Time import Time
+from .Stand import Stand
+from .StaticAppInfo import StaticAppInfo
+from .Time import Time
 
 
 # Helper class to raise errors

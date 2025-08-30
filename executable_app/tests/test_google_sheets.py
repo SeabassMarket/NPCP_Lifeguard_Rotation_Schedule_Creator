@@ -8,10 +8,10 @@ import pandas as pd
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
 
-from InfoManagers.CalculateSchedule import CalculateSchedule
-from InfoManagers.Lifeguard import Lifeguard
-from InfoManagers.StaticAppInfo import StaticAppInfo
-from InfoManagers.Time import Time
+from ..InfoManagers.CalculateSchedule import CalculateSchedule
+from ..InfoManagers.Lifeguard import Lifeguard
+from ..InfoManagers.StaticAppInfo import StaticAppInfo
+from ..InfoManagers.Time import Time
 
 """THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION"""
 

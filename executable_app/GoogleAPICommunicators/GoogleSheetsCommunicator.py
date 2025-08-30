@@ -9,10 +9,10 @@ from google.oauth2.service_account import Credentials
 from gspread.exceptions import APIError
 from requests import HTTPError
 
-from InfoManagers.CalculateSchedule import CalculateSchedule
-from InfoManagers.Lifeguard import Lifeguard
-from InfoManagers.StaticAppInfo import StaticAppInfo
-from InfoManagers.Time import Time
+from ..InfoManagers.CalculateSchedule import CalculateSchedule
+from ..InfoManagers.Lifeguard import Lifeguard
+from ..InfoManagers.StaticAppInfo import StaticAppInfo
+from ..InfoManagers.Time import Time
 
 
 # Helper functions

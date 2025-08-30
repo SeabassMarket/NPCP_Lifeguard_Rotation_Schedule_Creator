@@ -1,11 +1,11 @@
 # import libraries
 import tkinter as tk
 
-from InfoManagers.CalculateSchedule import CalculateSchedule
-from InfoManagers.StaticAppInfo import StaticAppInfo
-from InfoManagers.Time import Time
+from ..InfoManagers.CalculateSchedule import CalculateSchedule
+from ..InfoManagers.StaticAppInfo import StaticAppInfo
+from ..InfoManagers.Time import Time
 
-from GoogleAPICommunicators.GoogleSheetsCommunicator import GSCommunicator
+from ..GoogleAPICommunicators.GoogleSheetsCommunicator import GSCommunicator
 
 """THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION"""
 
@@ -17,9 +17,11 @@ upStands = {
     "E": [Time(hour=11, minute=0), Time(hour=20, minute=0), 1],
     "H": [Time(hour=11, minute=0), Time(hour=20, minute=0), 1],
     "K": [Time(hour=11, minute=0), Time(hour=20, minute=0), 1],
-    "A": [Time(hour=13, minute=0), Time(hour=19, minute=0), 1],
-    "B": [Time(hour=13, minute=0), Time(hour=19, minute=0), 1],
-    "I": [Time(hour=11, minute=0), Time(hour=19, minute=0), 1],
+    "A": [Time(hour=12, minute=0), Time(hour=20, minute=0), 1],
+    "B": [Time(hour=12, minute=0), Time(hour=20, minute=0), 1],
+    "I": [Time(hour=13, minute=0), Time(hour=19, minute=0), 1],
+    "T": [Time(hour=13, minute=0), Time(hour=19, minute=0), 1],
+    "S": [Time(hour=13, minute=0), Time(hour=19, minute=0), 1],
 }
 timelyDownStands = {
     "SU": [Time(hour=10, minute=40), Time(hour=11, minute=0), 10],
@@ -46,19 +48,19 @@ staticAppInfo.setEventDataSpecific(standData, eventDescriptor="stand")
 
 # Create information for the stands
 lifeguards = {
-    "Anik": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
-    "Kyle": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
-    "Eve": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
-    "Grayson": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
-    "Rowan": [Time(hour=11, minute=0), Time(hour=15, minute=0)],
-    "Sophie": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
-    "Ty": [Time(hour=11, minute=40), Time(hour=15, minute=0)],
-    "Brynn": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
-    "Connie": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
-    "Saniya": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
-    "Shalen": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
-    "Christian": [Time(hour=15, minute=0), Time(hour=17, minute=0)],
-    "Milla": [Time(hour=17, minute=0), Time(hour=19, minute=40)],
+    "EVE": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
+    "CHRISTIAN": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
+    "CLARISSA": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
+    "TY": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
+    "LARISSA": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
+    "MEGAN": [Time(hour=11, minute=0), Time(hour=19, minute=0)],
+    "JEFF": [Time(hour=12, minute=0), Time(hour=20, minute=0)],
+    "KYLE": [Time(hour=11, minute=40), Time(hour=19, minute=40)],
+    "ELLA": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
+    "CARYS": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
+    "ROWAN": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
+    "CONNIE": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
+    "GRAYSON": [Time(hour=13, minute=0), Time(hour=21, minute=0)],
 }
 
 lifeguardData = {
@@ -69,10 +71,31 @@ staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
 
 """END OF HARDCODING, BEGINNING OF DEVELOPING ALGORITHM"""
 
+# Create initial schedule
 calculator = CalculateSchedule(staticAppInfo)
 calculator.calculateSchedule()
 calculator.printSchedule()
 
+gs = GSCommunicator(staticAppInfo, calculator, 3, 1)
+
+gs.setWorksheet("Lifeguard Schedule", "NPCP_GOOGLE_SHEETS_KEY")
+gs.writeScheduleToWorksheet()
+print(f"Schedule uploaded: {gs.getItem('spreadsheet').url}")
+
+print()
+
+# Oh, no! Connie has to go home at an unexpected time! But we're ok
+calculator.getLifeguards().pop(11)
+calculator.calculateSchedule(Time(16, 20))
+calculator.printSchedule()
+
+gs = GSCommunicator(staticAppInfo, calculator, 3, 1)
+
+gs.setWorksheet("Emergency Lifeguard Schedule", "NPCP_GOOGLE_SHEETS_KEY")
+gs.writeScheduleToWorksheet()
+print(f"Schedule uploaded: {gs.getItem('spreadsheet').url}")
+
+# Run block length test
 blockLengthToCount: dict[int, int] = {}
 for lifeguard in calculator.getLifeguards():
     schedule = lifeguard.getSchedule()
@@ -94,20 +117,7 @@ for lifeguard in calculator.getLifeguards():
 
             blockLengthToCount[blockLength] = count + 1
 
-            if blockLength == 3:
-                print(currentTime.get12Time())
-
 sortedBlockLengthKeys = sorted(list(blockLengthToCount.keys()))
 for blockLength in sortedBlockLengthKeys:
     count = blockLengthToCount[blockLength]
     print(f"There were {count} blocks with length {blockLength}")
-
-print("Continue?", end="")
-input()
-
-# Use GSCommunicator
-gs = GSCommunicator(staticAppInfo, calculator, 3, 1)
-
-gs.setWorksheet("Lifeguard Schedule", "NPCP_GOOGLE_SHEETS_KEY")
-gs.writeScheduleToWorksheet()
-print(f"Schedule uploaded: {gs.getItem('spreadsheet').url}")

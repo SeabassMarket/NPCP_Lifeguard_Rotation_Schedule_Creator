@@ -3,15 +3,15 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import font
 
-from GUI.ScheduleFrame import ScheduleFrame
-from GUI.LifeguardFrame import LifeguardFrame
+from .ScheduleFrame import ScheduleFrame
+from .LifeguardFrame import LifeguardFrame
 
-from InfoManagers.StaticAppInfo import StaticAppInfo
-from InfoManagers.CalculateSchedule import CalculateSchedule, CalculaterException
+from ..InfoManagers.StaticAppInfo import StaticAppInfo
+from ..InfoManagers.CalculateSchedule import CalculateSchedule, CalculaterException
 
 import webbrowser
 
-from GoogleAPICommunicators.GoogleSheetsCommunicator import (
+from ..GoogleAPICommunicators.GoogleSheetsCommunicator import (
     GSCommunicator,
     WorksheetException,
     GSException,

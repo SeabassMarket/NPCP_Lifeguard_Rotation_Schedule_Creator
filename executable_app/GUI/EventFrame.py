@@ -2,8 +2,8 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font
-from InfoManagers.StaticAppInfo import StaticAppInfo
-from InfoManagers.Time import Time
+from ..InfoManagers.StaticAppInfo import StaticAppInfo
+from ..InfoManagers.Time import Time
 
 """This class will house the frames that go into the overall schedule frame.
 This will allow for organization and is also useful because each of the

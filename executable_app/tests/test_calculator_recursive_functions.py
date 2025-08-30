@@ -1,10 +1,9 @@
 # import libraries
-import time
 import tkinter as tk
 
-from InfoManagers.CalculateSchedule import CalculateSchedule
-from InfoManagers.StaticAppInfo import StaticAppInfo
-from InfoManagers.Time import Time
+from ..InfoManagers.CalculateSchedule import CalculateSchedule
+from ..InfoManagers.StaticAppInfo import StaticAppInfo
+from ..InfoManagers.Time import Time
 
 """THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION   """
 # Create static app info
@@ -68,15 +67,54 @@ lifeguardData = {
 staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
 
 """END OF HARDCODING, BEGINNING OF DEVELOPING ALGORITHM"""
+
 calculator = CalculateSchedule(staticAppInfo)
 
-TESTCOUNT = 100
+values = [
+    [4, 8, 1, 3],
+    [9, 1, 4, 2],
+    [3, 2, 4],
+    [8, 4, 9, 11],
+    [3, 10, 7, 5, 8],
+]
 
-count = 1
-start = time.time()
-print("starting calculation")
-while count <= TESTCOUNT:
-    print(f"Test number {count} at {time.time() - start}")
-    calculator.calculateSchedule()
-    count += 1
-print(f"Test ran for {time.time() - start} seconds to run {TESTCOUNT} calculation(s)")
+options = calculator.recursivelyGenerateRearrangementPermutations(values)
+staticAppInfo.printRecursivelyLongDictionary(options)
+print()
+optionsList = calculator.recursivelyInterpretGeneratedDictionary(options)
+for value in optionsList:
+    print(value)
+
+print()
+
+
+checks = 0
+
+
+def listsAreEqual(list1, list2):
+    global checks
+
+    result = True
+    for i in range(0, len(list1)):
+        checks += 1
+        if list1[i] != list2[i]:
+            result = False
+    return result
+
+
+duplicates = False
+for n in range(0, len(optionsList)):
+    for k in range(0, len(optionsList)):
+        if k != n:
+            if listsAreEqual(optionsList[n], optionsList[k]):
+                duplicates = True
+
+print("Values Tested:")
+for valueList in values:
+    print(valueList)
+
+print()
+
+print(f"Duplicates? {duplicates}")
+print(f"Checks performed: {checks}")
+print(len(optionsList), "possible permutations generated")

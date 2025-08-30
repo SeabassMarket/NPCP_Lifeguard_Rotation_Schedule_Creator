@@ -1,14 +1,12 @@
 # import libraries
+import time
 import tkinter as tk
 
-from InfoManagers.CalculateSchedule import CalculateSchedule
-from InfoManagers.StaticAppInfo import StaticAppInfo
-from InfoManagers.Time import Time
+from ..InfoManagers.CalculateSchedule import CalculateSchedule
+from ..InfoManagers.StaticAppInfo import StaticAppInfo
+from ..InfoManagers.Time import Time
 
-from GoogleAPICommunicators.GoogleSheetsCommunicator import GSCommunicator
-
-"""THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION"""
-
+"""THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION   """
 # Create static app info
 staticAppInfo = StaticAppInfo(tk.Tk())
 
@@ -47,7 +45,7 @@ standData = {
 staticAppInfo.setEventDataSpecific(standData, eventDescriptor="stand")
 
 # Create information for the stands
-lifeguardsDict = {
+lifeguards = {
     "1": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
     "2": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
     "3": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
@@ -64,21 +62,21 @@ lifeguardsDict = {
 }
 
 lifeguardData = {
-    "lifeguard": lifeguardsDict,
+    "lifeguard": lifeguards,
 }
 
 staticAppInfo.setEventDataSpecific(lifeguardData, eventDescriptor="lifeguard")
 
 """END OF HARDCODING, BEGINNING OF DEVELOPING ALGORITHM"""
-
-# Calculate Schedule
-
 calculator = CalculateSchedule(staticAppInfo)
-calculator.calculateSchedule()
 
-# Use GSCommunicator
-gs = GSCommunicator(staticAppInfo, calculator, 3, 1)
+TESTCOUNT = 100
 
-gs.setWorksheet("Lifeguard Schedule", "NPCP_GOOGLE_SHEETS_KEY")
-gs.writeScheduleToWorksheet()
-print(f"Schedule uploaded: {gs.getItem('spreadsheet').url}")
+count = 1
+start = time.time()
+print("starting calculation")
+while count <= TESTCOUNT:
+    print(f"Test number {count} at {time.time() - start}")
+    calculator.calculateSchedule()
+    count += 1
+print(f"Test ran for {time.time() - start} seconds to run {TESTCOUNT} calculation(s)")
