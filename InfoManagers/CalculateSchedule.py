@@ -48,6 +48,11 @@ class CalculateSchedule:
                 )
                 count += 1
 
+        # Create lifeguard dict
+        self._lifeguardDict: dict[str, Lifeguard] = {}
+        for lifeguard in self._lifeguards:
+            self._lifeguardDict[lifeguard.getName()] = lifeguard
+
         # Up stands
         upStandData = list(standData.values())[0]
         self._upStands = []
@@ -103,64 +108,24 @@ class CalculateSchedule:
         # Initialize branch time
         self._branchTime = Time(0, 0)
 
-    def addLifeguard(self, startTime: Time, endTime: Time, name: str):
-        lifeguardIdNums = []
-        for lifeguard in self._lifeguards:
-            lifeguardIdNums.append(lifeguard.getIdNum())
+    def addLifeguardSchedule(self, lifeguardNamesToSchedule: dict[str, list[str]]):
+        for name in lifeguardNamesToSchedule:
+            lifeguard = self._lifeguardDict[name]
 
-        lifeguardId = 0
-        if len(lifeguardIdNums) > 0:
-            lifeguardId = max(lifeguardIdNums) + 1
+            schedule = lifeguardNamesToSchedule[name]
 
-        lifeguard = Lifeguard(
-            shiftTimes=[startTime, endTime],
-            name=name,
-            idNum=lifeguardId,
-            staticAppInfo=self._staticAppInfo,
-        )
-        self._lifeguards.append(lifeguard)
+            lifeguardSchedule = lifeguard.getSchedule()
 
-    def removeLifeguard(self, name):
-        for i in range(len(self._lifeguards) - 1, -1, -1):
-            lifeguard = self._lifeguards[i]
+            index = 0
+            for scheduleTime in lifeguardSchedule:
+                if index < len(schedule):
+                    break
 
-            if lifeguard.getName() == name:
-                self._lifeguards.pop(i)
-                return
+                stand = schedule[index]
 
-    # TODO: add the methods to add stands as well
+                lifeguardSchedule[scheduleTime] = stand
 
-    def removeUpStand(self, name):
-        for i in range(len(self._upStands) - 1, -1, -1):
-            stand = self._upStands[i]
-
-            if stand.getName() == name:
-                self._upStands.pop(i)
-                return
-
-    def removeTimelyDownStand(self, name):
-        for i in range(len(self._timelyDownStands) - 1, -1, -1):
-            stand = self._timelyDownStands[i]
-
-            if stand.getName() == name:
-                self._timelyDownStands.pop(i)
-                return
-
-    def removePriorityDownStand(self, name):
-        for i in range(len(self._priorityDownStands) - 1, -1, -1):
-            stand = self._priorityDownStands[i]
-
-            if stand.getName() == name:
-                self._priorityDownStands.pop(i)
-                return
-
-    def removeFillInDownStand(self, name):
-        for i in range(len(self._fillInDownStands) - 1, -1, -1):
-            stand = self._fillInDownStands[i]
-
-            if stand.getName() == name:
-                self._fillInDownStands.pop(i)
-                return
+                index += 1
 
     def calculateSchedule(self, branchTime: Time = Time(0, 0)):
         self._branchTime = branchTime
