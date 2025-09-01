@@ -203,6 +203,12 @@ class SpreadsheetInterpreter:
                         f"{sheet.name} formatting is incorrect. Row two should be Num, check template"
                     )
 
+                # ============================================================
+                # AUTOMATIC SU AND CU
+                # ============================================================
+
+                # Check data
+
                 upStandsData = response.get("Up Stands")
 
                 if upStandsData is None:
@@ -227,7 +233,76 @@ class SpreadsheetInterpreter:
                         f'{sheet.name} cannot calculate CU and SU: sheet "Lifeguards" does not have data'
                     )
 
-                # CU and SU stuff
+                # Calculate earliest and latest times of up stands
+
+                earliestStandTime = None
+                latestStandTime = None
+                for stand in upStandsData:
+                    data = upStandsData[stand]
+
+                    standTimes = data["times"]
+
+                    for thisTime in standTimes:
+                        if earliestStandTime is None or (
+                            isinstance(earliestStandTime, Time)
+                            and thisTime.getMinutes() < earliestStandTime.getMinutes()
+                        ):
+                            earliestStandTime = thisTime
+
+                        if latestStandTime is None or (
+                            isinstance(latestStandTime, Time)
+                            and thisTime.getMinutes() > latestStandTime.getMinutes()
+                        ):
+                            latestStandTime = thisTime
+
+                # Create lifeguard objects
+
+                earliestLifeguardTime = None
+                latestLifeguardTime = None
+
+                for i in range(len(lifeguardData)):
+                    name = list(lifeguardData.keys())[i]
+
+                    shiftTimes = lifeguardData[name]["times"]
+
+                    if earliestLifeguardTime is None or (
+                        isinstance(earliestLifeguardTime, Time)
+                        and shiftTimes[0].getMinutes() < earliestLifeguardTime.getMinutes()
+                    ):
+                        earliestLifeguardTime = shiftTimes[0]
+
+                    if latestStandTime is None or (
+                        isinstance(latestStandTime, Time)
+                        and shiftTimes[1].getMinutes() > latestStandTime.getMinutes()
+                    ):
+                        latestLifeguardTime = shiftTimes[1]
+
+                # Find times and amount for SU and CU
+
+                suTimes = []
+
+                for t in range(
+                    earliestLifeguardTime.getMinutes(),
+                    earliestStandTime.getMinutes(),
+                    StaticAPIInfo.timeInterval,
+                ):
+                    suTimes.append(Time().setTimeWithMinutes(t))
+
+                responseData["SU"] = {"num": len(lifeguardData), "times": suTimes}
+
+                cuTimes = []
+                for t in range(
+                    latestStandTime.getMinutes() + StaticAPIInfo.timeInterval,
+                    latestLifeguardTime.getMinutes(),
+                    StaticAPIInfo.timeInterval,
+                ):
+                    cuTimes.append(Time().setTimeWithMinutes(t))
+
+                responseData["CU"] = {"num": len(lifeguardData), "times": cuTimes}
+
+                # ============================================================
+                # All other Timely Down Stands
+                # ============================================================
 
                 # Create the times list
                 times = generateTimes(sheet, 2)
