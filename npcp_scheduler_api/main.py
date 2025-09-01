@@ -18,17 +18,17 @@ async def read_data(request: Request):
     try:
         interpreter = SpreadsheetInterpreter(body)
 
-        response = interpreter.interpret()
-
         spreadsheet = interpreter.spreadsheet
 
         for sheet in spreadsheet.sheets:
-            logger.info(
-                f"Info for {sheet.name}:\nrows: {sheet.rows}\ncolumns: {sheet.columns}"
-            )
+            logger.info(f"Info for {sheet.name}:")
+            logger.info(f"Rows ({len(sheet.rows)}): {sheet.rows}")
+            logger.info(f"Columns ({len(sheet.columns)}): {sheet.columns}")
+
+        response = interpreter.interpret()
 
     except Exception as e:
-        logger.error(f"Error parsing JSON into objects: {e}")
+        logger.error(f"could not parse information: {e}")
         return {"status": "error", "message": str(e)}
 
     # Return something simple for testing

@@ -1,7 +1,15 @@
 from typing import List
 from dataclasses import dataclass
 
+import logging
+
 import numpy as np
+
+from Static_API_Info import StaticAPIInfo
+from Time import Time
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -17,6 +25,43 @@ class Sheet:
 class Spreadsheet:
     name: str
     sheets: List[Sheet]
+
+
+def convertDecimal(decimal: float) -> int:
+    return round(decimal * 24 * 60)
+
+
+def generateTimes(sheet: Sheet, start: int) -> list[Time]:
+    try:
+        firstTime = sheet.columns[0][start]
+
+        if isinstance(firstTime, float):
+            firstTime = Time().setTimeWithMinutes(convertDecimal(firstTime))
+
+        elif isinstance(firstTime, str):
+            if len(firstTime) < 5:
+                firstTime = f"0{firstTime}"
+            firstTime = f"{firstTime} AM"
+            firstTime = Time().set12Time(
+                int(firstTime[:2]), int(firstTime[3:5]), firstTime[6:8]
+            )
+
+        else:
+            raise TypeError(
+                "Column A, row 2 expected to be a valid time format, check template"
+            )
+    except Exception as e:
+        raise Exception(f"Error setting first time in {sheet.name}: {str(e)}")
+
+    times = [firstTime]
+    for t in range(1, len(sheet.columns[0])):
+        minutes = firstTime.getMinutes() + t * StaticAPIInfo.timeInterval
+
+        thisTime = Time().setTimeWithMinutes(minutes)
+
+        times.append(thisTime)
+
+    return times
 
 
 # A class to interpret google sheet information
@@ -53,18 +98,200 @@ class SpreadsheetInterpreter:
         if self._call == "preview":
             return self.preview()
 
-        if self._call == "calculate":
+        elif self._call == "calculate":
             return self.calculate()
 
         raise ValueError("Call not set to a valid value")
 
-    def preview(self):
-        names = []
+    def generateData(self) -> dict[str, dict[str, dict | list]]:
+        response: dict[str, dict[str, dict | list]] = {}
 
+        # Set up stand data before everything else
         for sheet in self._spreadsheet.sheets:
-            names.append(sheet.name)
+            responseData: dict[str, dict | list] = {}
 
-        return names
+            if sheet.name == "Up Stands":
+                responseData: dict[str, dict | list] = {}
+
+                if len(sheet.rows) < 2:
+                    raise IndexError(f"{sheet.name} sheet has too little rows")
+
+                # Create the times list
+                times = generateTimes(sheet, 1)
+
+                # Parse data
+                for c in range(1, len(sheet.columns)):
+                    column = sheet.columns[c]
+
+                    standName = column[0]
+
+                    if len(standName) > 0 and standName != "EMPTY":
+                        possibleTimes = column[1:]
+
+                        timesUp = []
+                        for t in range(len(possibleTimes)):
+                            slot = possibleTimes[t]
+
+                            if len(slot) > 0:
+                                timesUp.append(times[t])
+
+                        if len(timesUp) > 0:
+                            responseData[standName] = {"times": timesUp}
+
+            elif sheet.name == "Lifeguards":
+                if len(sheet.rows) < 2:
+                    raise IndexError(f"{sheet.name} sheet has too little rows")
+
+                # Create the times list
+                times = generateTimes(sheet, 1)
+
+                # Parse data
+                for c in range(1, len(sheet.columns)):
+                    column = sheet.columns[c]
+
+                    def convertLifeguardName(name: str) -> str:
+                        for i in range(len(name)):
+                            character = name[i]
+
+                            if character.isalpha():
+                                return name[i:]
+
+                        return f"Lifeguard {c}"
+
+                    lifeguardName = column[0]
+
+                    if len(lifeguardName) > 0 and lifeguardName != "EMPTY":
+                        lifeguardName = convertLifeguardName(lifeguardName)
+
+                        possibleTimes = column[1:]
+
+                        firstSlot = None
+                        lastSlot = None
+                        for t in range(len(possibleTimes)):
+                            if len(possibleTimes[t]) > 0:
+                                if firstSlot is None:
+                                    firstSlot = t
+                                lastSlot = t
+
+                        if firstSlot is None:
+                            raise TypeError(
+                                f"error setting lifeguard {lifeguardName}: no start time"
+                            )
+
+                        firstTime = times[firstSlot]
+
+                        lastTime = Time().setTimeWithMinutes(
+                            times[lastSlot].getMinutes() + StaticAPIInfo.timeInterval
+                        )
+
+                        timeRange = [firstTime, lastTime]
+
+                        responseData[lifeguardName] = {"times": timeRange}
+
+            response[sheet.name] = responseData
+
+        # Set other data
+        for sheet in self._spreadsheet.sheets:
+            responseData: dict[str, dict | list] = {}
+
+            if sheet.name == "Timely Down Stands":
+                if len(sheet.rows) < 2:
+                    raise IndexError(f"{sheet.name} sheet has too little rows")
+
+                if sheet.rows[1][0] != "Num":
+                    raise ValueError(
+                        f"{sheet.name} formatting is incorrect. Row two should be Num, check template"
+                    )
+
+                upStandsData = response.get("Up Stands")
+
+                if upStandsData is None:
+                    raise ValueError(
+                        f'{sheet.name} cannot calculate CU and SU: sheet "Up Stands" does not exist'
+                    )
+
+                if len(upStandsData) < 1:
+                    raise IndexError(
+                        f'{sheet.name} cannot calculate CU and SU: sheet "Up Stands" does not have data'
+                    )
+
+                lifeguardData = response.get("Lifeguards")
+
+                if lifeguardData is None:
+                    raise ValueError(
+                        f'{sheet.name} cannot calculate CU and SU: sheet "Lifeguards" does not exist'
+                    )
+
+                if len(lifeguardData) < 1:
+                    raise IndexError(
+                        f'{sheet.name} cannot calculate CU and SU: sheet "Lifeguards" does not have data'
+                    )
+
+                # CU and SU stuff
+
+                # Create the times list
+                times = generateTimes(sheet, 2)
+
+                # Set nums
+                nums = sheet.rows[1]
+
+                # Parse data
+                for c in range(1, len(sheet.columns)):
+                    column = sheet.columns[c]
+
+                    standName = column[0]
+
+                    if len(standName) > 0 and standName != "EMPTY":
+                        possibleTimes = column[2:]
+
+                        timesUp = []
+                        for t in range(len(possibleTimes)):
+                            slot = possibleTimes[t]
+
+                            if len(slot) > 0:
+                                timesUp.append(times[t])
+
+                        num = nums[c]
+
+                        responseData[standName] = {"num": num, "times": timesUp}
+
+            elif (
+                sheet.name == "Priority Down Stands"
+                or sheet.name == "Fill-In Down Stands"
+            ):
+                if len(sheet.columns) < 1:
+                    raise IndexError(f"{sheet.name} sheet has too little columns")
+
+                column = sheet.columns[0]
+
+                stands = []
+                for r in range(1, len(column)):
+                    stand = column[r]
+
+                    stands.append(stand)
+
+                responseData["stands"] = stands
+
+            if sheet.name != "Up Stands" and sheet.name != "Lifeguards":
+                response[sheet.name] = responseData
+
+        return response
+
+    def preview(self):
+        response: dict[str, dict[str, dict | list]] = self.generateData()
+
+        # Iterate through, find time objects, convert them to strings
+        for key in response:
+            responseData: dict[str, dict | list] = response[key]
+
+            for value in list(responseData.values()):
+                if isinstance(value, dict):
+                    times: list[Time] = value.get("times", [])
+
+                    for i in range(len(times)):
+                        times[i] = times[i].get12Time()
+
+        return response
 
     def calculate(self):
         return "Sigma"
