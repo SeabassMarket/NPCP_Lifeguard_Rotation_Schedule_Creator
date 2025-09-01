@@ -11,6 +11,12 @@ from Time import Time
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+"""
+============================================================
+HELPFUL DATACLASSES
+============================================================
+"""
+
 
 @dataclass
 class Sheet:
@@ -25,6 +31,13 @@ class Sheet:
 class Spreadsheet:
     name: str
     sheets: List[Sheet]
+
+
+"""
+============================================================
+HELPFUL FUNCTIONS
+============================================================
+"""
 
 
 def convertDecimal(decimal: float) -> int:
@@ -64,6 +77,46 @@ def generateTimes(sheet: Sheet, start: int) -> list[Time]:
     return times
 
 
+def checkDuplicateStands(response):
+    categories = [
+        "Up Stands",
+        "Priority Down Stands",
+        "Timely Down Stands",
+        "Fill-In Down Stands",
+    ]
+    seen = set()
+    duplicates = set()
+
+    for category in categories:
+        data = response.get(category)
+        if not data:
+            continue
+
+        if category == "Up Stands":
+            standNames = data.keys()
+        elif category in ("Priority Down Stands", "Fill-In Down Stands"):
+            standNames = data.get("stands", [])
+        elif category == "Timely Down Stands":
+            standNames = data.keys()
+        else:
+            standNames = []
+
+        for name in standNames:
+            if name in seen:
+                duplicates.add(name)
+            else:
+                seen.add(name)
+
+    return list(duplicates)
+
+
+"""
+============================================================
+MAIN INTERPRETER CLASS
+============================================================
+"""
+
+
 # A class to interpret google sheet information
 class SpreadsheetInterpreter:
     def __init__(self, body):
@@ -87,7 +140,7 @@ class SpreadsheetInterpreter:
         # Set call instance variable
         call = body.get("call", None)
         if call is None:
-            raise TypeError("call is none - it was not set in JSON body")
+            raise TypeError('Variable "call" is none - it was not set in JSON body')
         self._call = call
 
     @property
@@ -101,7 +154,7 @@ class SpreadsheetInterpreter:
         elif self._call == "calculate":
             return self.calculate()
 
-        raise ValueError("Call not set to a valid value")
+        raise ValueError('Variable "call" not set to a valid value')
 
     def generateData(self) -> dict[str, dict[str, dict | list]]:
         response: dict[str, dict[str, dict | list]] = {}
@@ -175,7 +228,7 @@ class SpreadsheetInterpreter:
 
                         if firstSlot is None:
                             raise TypeError(
-                                f"error setting lifeguard {lifeguardName}: no start time"
+                                f"Error setting lifeguard {lifeguardName}: no start time"
                             )
 
                         firstTime = times[firstSlot]
@@ -267,7 +320,8 @@ class SpreadsheetInterpreter:
 
                     if earliestLifeguardTime is None or (
                         isinstance(earliestLifeguardTime, Time)
-                        and shiftTimes[0].getMinutes() < earliestLifeguardTime.getMinutes()
+                        and shiftTimes[0].getMinutes()
+                        < earliestLifeguardTime.getMinutes()
                     ):
                         earliestLifeguardTime = shiftTimes[0]
 
@@ -365,6 +419,12 @@ class SpreadsheetInterpreter:
 
                     for i in range(len(times)):
                         times[i] = times[i].get12Time()
+
+        # Check for duplicates
+        duplicates = checkDuplicateStands(response)
+        if len(duplicates) > 0:
+            formatted = ", ".join(f'"{name}"' for name in duplicates)
+            raise ValueError(f"Duplicate stands found across multiple sheets: {formatted}")
 
         return response
 

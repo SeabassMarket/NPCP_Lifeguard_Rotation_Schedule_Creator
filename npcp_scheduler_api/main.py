@@ -20,18 +20,27 @@ async def read_data(request: Request):
 
         spreadsheet = interpreter.spreadsheet
 
-        for sheet in spreadsheet.sheets:
-            logger.info(f"Info for {sheet.name}:")
-            logger.info(f"Rows ({len(sheet.rows)}): {sheet.rows}")
-            logger.info(f"Columns ({len(sheet.columns)}): {sheet.columns}")
-
         response = interpreter.interpret()
 
     except Exception as e:
         logger.error(f"could not parse information: {e}")
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": f"Error parsing info: {str(e)}"}
 
-    # Return something simple for testing
+    # Final checks and return response
+
+    requiredValues = (
+        "Lifeguards",
+        "Up Stands",
+        "Timely Down Stands",
+        "Priority Down Stands",
+        "Fill-In Down Stands",
+    )
+
+    for value in requiredValues:
+        if value not in response:
+            logger.error(f"Missing sheet: {value}")
+            return {"status": "error", "message": f"Missing sheet: {value}"}
+
     return {"status": "success", "response": response}
 
 
