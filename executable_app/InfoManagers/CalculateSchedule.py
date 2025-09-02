@@ -889,8 +889,6 @@ class CalculateSchedule:
 
     # Reorganizes stands that lifeguards are on to optimize relieving
     def reorganizeLifeguards(self):
-        self._staticAppInfo.updateStandCombos(self._upStands)
-
         earliestTime, latestTime = self.calculatePoolOpenTimeRange()
 
         times = [earliestTime.getMinutes(), self._branchTime.getMinutes()]

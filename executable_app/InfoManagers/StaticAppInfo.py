@@ -390,10 +390,3 @@ class StaticAppInfo:
                     addPermutation(newDepth)
 
         return permutations
-
-    def updateStandCombos(self, stands: list[Stand]):
-        for stand in stands:
-            stand = stand.getName()
-
-            if stand not in self._standCombos:
-                self._standCombos[stand] = []
