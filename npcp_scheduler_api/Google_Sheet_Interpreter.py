@@ -2,9 +2,12 @@ from typing import List
 from dataclasses import dataclass
 
 import logging
+import traceback
 
 import numpy as np
 
+from CalculateSchedule import CalculaterException
+from CalculateSchedule import CalculateSchedule
 from Static_API_Info import StaticAPIInfo
 from Time import Time
 
@@ -155,6 +158,45 @@ class SpreadsheetInterpreter:
             return self.calculate()
 
         raise ValueError('Variable "call" not set to a valid value')
+
+    def preview(self):
+        response: dict[str, dict[str, dict | list]] = self.generateData()
+
+        # Iterate through, find time objects, convert them to strings
+        for key in response:
+            responseData: dict[str, dict | list] = response[key]
+
+            for value in list(responseData.values()):
+                if isinstance(value, dict):
+                    times: list[Time] = value.get("times", [])
+
+                    for i in range(len(times)):
+                        times[i] = times[i].get12Time()
+
+        # Check for duplicates
+        duplicates = checkDuplicateStands(response)
+        if len(duplicates) > 0:
+            formatted = ", ".join(f'"{name}"' for name in duplicates)
+            raise ValueError(
+                f"Duplicate stands found across multiple sheets: {formatted}"
+            )
+
+        return response
+
+    def calculate(self):
+        data: dict[str, dict[str, dict | list]] = self.generateData()
+
+        staticAPIInfo = StaticAPIInfo(data)
+
+        try:
+            calculator = CalculateSchedule(staticAPIInfo)
+
+            response = calculator.calculateSchedule()
+
+            return response
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            raise CalculaterException(f"Error calculating: {str(e)}")
 
     def generateData(self) -> dict[str, dict[str, dict | list]]:
         response: dict[str, dict[str, dict | list]] = {}
@@ -405,30 +447,3 @@ class SpreadsheetInterpreter:
                 response[sheet.name] = responseData
 
         return response
-
-    def preview(self):
-        response: dict[str, dict[str, dict | list]] = self.generateData()
-
-        # Iterate through, find time objects, convert them to strings
-        for key in response:
-            responseData: dict[str, dict | list] = response[key]
-
-            for value in list(responseData.values()):
-                if isinstance(value, dict):
-                    times: list[Time] = value.get("times", [])
-
-                    for i in range(len(times)):
-                        times[i] = times[i].get12Time()
-
-        # Check for duplicates
-        duplicates = checkDuplicateStands(response)
-        if len(duplicates) > 0:
-            formatted = ", ".join(f'"{name}"' for name in duplicates)
-            raise ValueError(
-                f"Duplicate stands found across multiple sheets: {formatted}"
-            )
-
-        return response
-
-    def calculate(self):
-        return "Sigma"

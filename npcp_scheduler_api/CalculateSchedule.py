@@ -5,6 +5,11 @@ from Stand import Stand
 from Static_API_Info import StaticAPIInfo
 from Time import Time
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 # Helper class to raise errors
 class CalculaterException(Exception):
@@ -17,34 +22,44 @@ class CalculateSchedule:
     def __init__(self, staticAPIInfo):
         # Initialize staticAPIInfo
         if isinstance(staticAPIInfo, StaticAPIInfo):
-            self._staticAppInfo = staticAPIInfo
+            self._staticAPIInfo = staticAPIInfo
         else:
             raise TypeError("No valid StaticAPIInfo object for Calculate Schedule")
 
-        # Get lifeguardData from staticAPIInfo
-        lifeguardData = self._staticAppInfo.getEventDataSpecific("lifeguard")
+        # Get and check data
+        data = self._staticAPIInfo.data
 
-        # Get stand date from staticAPIInfo
-        standData = self._staticAppInfo.getEventDataSpecific("stand")
+        requiredValues = (
+            "Lifeguards",
+            "Up Stands",
+            "Timely Down Stands",
+            "Priority Down Stands",
+            "Fill-In Down Stands",
+        )
+
+        for value in requiredValues:
+            if value not in data:
+                raise ValueError(f"Missing sheet: {value}")
 
         # Check data length
-        if len(lifeguardData) < 1 or len(standData) < 1:
+        if len(data) < 1:
             raise CalculaterException("Data not set")
 
         # Create lifeguard objects
-        for lifeguardKey in lifeguardData:
-            self._lifeguards: list[Lifeguard] = []
-            lifeguards = lifeguardData[lifeguardKey]
-            count = 0
-            for lifeguard in lifeguards:
-                self._lifeguards.append(
-                    Lifeguard(
-                        shiftTimes=lifeguards[lifeguard],
-                        name=lifeguard,
-                        idNum=count,
-                    )
+        self._lifeguards: list[Lifeguard] = []
+
+        lifeguards = data["Lifeguards"]
+
+        count = 0
+        for lifeguard in lifeguards:
+            self._lifeguards.append(
+                Lifeguard(
+                    shiftTimes=lifeguards[lifeguard]["times"],
+                    name=lifeguard,
+                    idNum=count,
                 )
-                count += 1
+            )
+            count += 1
 
         # Create lifeguard dict
         self._lifeguardDict: dict[str, Lifeguard] = {}
@@ -52,53 +67,31 @@ class CalculateSchedule:
             self._lifeguardDict[lifeguard.getName()] = lifeguard
 
         # Up stands
-        upStandData = list(standData.values())[0]
+        upStandData = data["Up Stands"]
         self._upStands = []
         for stand in upStandData:
             newStand = Stand(
                 name=stand,
-                standType=list(standData.keys())[0],
-                startTime=upStandData[stand][0],
-                endTime=upStandData[stand][1],
+                times=upStandData[stand]["times"],
             )
             self._upStands.append(newStand)
+
         # Timely down stands
-        timelyDownStandData = list(standData.values())[1]
+        timelyDownStandData = data["Timely Down Stands"]
         self._timelyDownStands = []
         for stand in timelyDownStandData:
             newStand = Stand(
                 name=stand,
-                standType=list(standData.keys())[1],
-                startTime=timelyDownStandData[stand][0],
-                endTime=timelyDownStandData[stand][1],
-                amountPerInterval=timelyDownStandData[stand][2],
+                times=timelyDownStandData[stand]["times"],
+                amountPerInterval=timelyDownStandData[stand]["num"],
             )
             self._timelyDownStands.append(newStand)
+
         # Priority down stands
-        priorityDownStandData = list(standData.values())[2]
-        self._priorityDownStands = []
-        for stand in priorityDownStandData:
-            newStand = Stand(
-                name=stand,
-                standType=list(standData.keys())[2],
-                isAllDay=True,
-                startTime=priorityDownStandData[stand][0],
-                endTime=priorityDownStandData[stand][1],
-                amountPerInterval=priorityDownStandData[stand][2],
-            )
-            self._priorityDownStands.append(newStand)
+        self._priorityDownStands = data["Priority Down Stands"]["stands"]
+
         # Fill-in down stands
-        fillInDownStandData = list(standData.values())[3]
-        self._fillInDownStands = []
-        for stand in fillInDownStandData:
-            newStand = Stand(
-                name=stand,
-                standType=list(standData.keys())[3],
-                isAllDay=True,
-                startTime=fillInDownStandData[stand][0],
-                endTime=fillInDownStandData[stand][1],
-            )
-            self._fillInDownStands.append(newStand)
+        self._fillInDownStands = data["Fill-In Down Stands"]["stands"]
 
         # Initialize the breaks instance variable
         self._breaks = []
@@ -131,6 +124,30 @@ class CalculateSchedule:
         self.resetSchedule()
         self.assignBreaks()
         self.calculateStands()
+
+        earliestTime, latestTime = self.calculatePoolOpenTimeRange()
+
+        scheduleData: dict[Time, list[str]] = {}
+
+        for t in range(
+            earliestTime.getMinutes(),
+            latestTime.getMinutes(),
+            StaticAPIInfo.timeInterval,
+        ):
+            currentTime = Time().setTimeWithMinutes(t)
+
+            stands = []
+
+            for lifeguard in self._lifeguards:
+                stand = lifeguard.getStand(currentTime)
+
+                stands.append(stand)
+
+            scheduleData[currentTime.getStripped12Time()] = stands
+
+        lifeguardNames: list[str] = list(self._lifeguardDict.keys())
+
+        return {"Schedule": scheduleData, "Lifeguards": lifeguardNames}
 
     def calculateStands(self):
         # Get the time range of when the pool is open
@@ -644,7 +661,7 @@ class CalculateSchedule:
 
         lifeguardsLength = len(lifeguardsDownAtTime)
 
-        standsOpen = Stand.getStandNames(self._fillInDownStands)
+        standsOpen = self._fillInDownStands
 
         if len(standsOpen) < 1:
             return
@@ -664,7 +681,7 @@ class CalculateSchedule:
             currentTime, [StaticAPIInfo.emptyCode]
         )
 
-        standsOpen = Stand.getStandNames(self._priorityDownStands)
+        standsOpen = list(self._priorityDownStands)
 
         minimum = min([len(lifeguardsDownAtTime), len(standsOpen)])
 
@@ -1768,12 +1785,7 @@ class CalculateSchedule:
 
             # For each stand in upStandData, check to see if it is open at the given time
             for stand in self._upStands:
-                # Get the times of the start and end of the stand
-                time1 = stand.getStartTime()
-                time2 = stand.getEndTime()
-
-                # Increase count by 1 if the current time is between the start and end of the time
-                if thisTime.getIsInBetweenExclusiveEnd(time1, time2):
+                if stand.isOpen(thisTime):
                     count += 1
 
             # Set the dictionary value with its proper key

@@ -31,62 +31,17 @@ class StaticAPIInfo:
     emptyCode: str = "EMPTY"
 
     # Construct the object, this class will just house some variables used across classes
-    def __init__(self):
-        # Global
-        self._fullEvents = dict()  # A dictionary full of the event names
-        self._eventData = dict()  # A dictionary full of the event names AND times
+    def __init__(self, data):
+        self._data = data
+
+    @property
+    def data(self):
+        return self._data
 
     # Returns how many intervals long the break time is
     @staticmethod
     def getBreakInterval():
         return int(StaticAPIInfo.breakTime / StaticAPIInfo.timeInterval)
-
-    # Grabs the full events list depending on the descriptor
-    def getCopyFullEventsSpecific(self, eventDescriptor):
-        if eventDescriptor in self._fullEvents:
-            if isinstance(self._fullEvents[eventDescriptor], list):
-                return list(self._fullEvents[eventDescriptor])
-        return []
-
-    # Gets the reference to the full events (USE WITH CAUTION)
-    def getReferenceFullEventsSpecific(self, eventDescriptor):
-        if eventDescriptor in self._fullEvents:
-            return self._fullEvents[eventDescriptor]
-        return []
-
-    # Remove events from the full events list for that type
-    def removeEventsFromFullList(self, eventNames, eventDescriptor):
-        events = self.getReferenceFullEventsSpecific(eventDescriptor)
-        for i in range(len(events) - 1, -1, -1):
-            if events[i] in eventNames:
-                events.pop(i)
-
-    # Adds events to the full events lists for that type
-    def addEventsToFullListSpecific(self, eventsToAdd, eventDescriptor):
-        events = self.getReferenceFullEventsSpecific(eventDescriptor)
-        for event in eventsToAdd:
-            events.append(event)
-
-    # Creates a new spot in the dictionary for a certain event descriptor
-    def addTypeEventToDict(self, eventDescriptor):
-        self._fullEvents[eventDescriptor] = []
-
-    # Sets the event data to a dictionary (no need for input validation because
-    # the functions that use this already validate)
-    def setEventDataSpecific(self, eventData, eventDescriptor):
-        self._eventData[eventDescriptor] = eventData
-
-    # Returns event data (BE CAREFUL - THIS IS A REFERENCE)
-    def getEventDataSpecific(self, eventDescriptor):
-        return self._eventData[eventDescriptor]
-
-    # Returns the eventData PERIOD (REFERENCE, CAUTION)
-    def getEventData(self):
-        return self._eventData
-
-    # Adds a type of event to event data
-    def addEventDataSpecific(self, eventDescriptor):
-        self._eventData[eventDescriptor] = dict()
 
     # Finds the key in a dictionary that has the highest value (provided each value is an int/float)
     # NOTE: It will return the last key that has the max value

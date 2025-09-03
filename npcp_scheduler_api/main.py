@@ -18,9 +18,9 @@ async def read_data(request: Request):
     try:
         interpreter = SpreadsheetInterpreter(body)
 
-        spreadsheet = interpreter.spreadsheet
-
         response = interpreter.interpret()
+
+        logger.info(response)
 
     except Exception as e:
         logger.error(f"could not parse information: {e}")
