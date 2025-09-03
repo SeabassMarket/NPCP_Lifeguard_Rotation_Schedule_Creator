@@ -223,11 +223,3 @@ class StaticAPIInfo:
                     addPermutation(newDepth)
 
         return permutations
-
-    @staticmethod
-    def updateStandCombos(stands: list[Stand]):
-        for stand in stands:
-            stand = stand.getName()
-
-            if stand not in StaticAPIInfo.standCombos:
-                StaticAPIInfo.standCombos[stand] = []
