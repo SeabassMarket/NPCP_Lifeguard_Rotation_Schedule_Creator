@@ -424,7 +424,9 @@ class SpreadsheetInterpreter:
         duplicates = checkDuplicateStands(response)
         if len(duplicates) > 0:
             formatted = ", ".join(f'"{name}"' for name in duplicates)
-            raise ValueError(f"Duplicate stands found across multiple sheets: {formatted}")
+            raise ValueError(
+                f"Duplicate stands found across multiple sheets: {formatted}"
+            )
 
         return response
 
