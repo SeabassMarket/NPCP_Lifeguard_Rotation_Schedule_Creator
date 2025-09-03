@@ -52,7 +52,7 @@ standData = {
 
 staticAppInfo.setEventDataSpecific(standData, eventDescriptor="stand")
 
-# Create information for the stands
+# Create information for the lifeguards
 lifeguardsDict = {
     "1": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
     "2": [Time(hour=10, minute=40), Time(hour=18, minute=40)],
