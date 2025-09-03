@@ -160,18 +160,22 @@ class SpreadsheetInterpreter:
         raise ValueError('Variable "call" not set to a valid value')
 
     def preview(self):
-        response: dict[str, dict[str, dict | list]] = self.generateData()
+        response: dict[str, dict[str, dict | list | object]] = self.generateData()
 
         # Iterate through, find time objects, convert them to strings
         for key in response:
-            responseData: dict[str, dict | list] = response[key]
+            responseData: dict[str, dict | list | object] = response[key]
 
-            for value in list(responseData.values()):
+            for responseDataKey in responseData:
+                value = responseData[responseDataKey]
+
                 if isinstance(value, dict):
                     times: list[Time] = value.get("times", [])
 
                     for i in range(len(times)):
                         times[i] = times[i].get12Time()
+                elif isinstance(value, Time):
+                    responseData[responseDataKey] = value.get12Time()
 
         # Check for duplicates
         duplicates = checkDuplicateStands(response)
@@ -184,7 +188,7 @@ class SpreadsheetInterpreter:
         return response
 
     def calculate(self):
-        data: dict[str, dict[str, dict | list]] = self.generateData()
+        data: dict[str, dict[str, dict | list | object]] = self.generateData()
 
         staticAPIInfo = StaticAPIInfo(data)
 
@@ -198,8 +202,8 @@ class SpreadsheetInterpreter:
             logger.error(traceback.format_exc())
             raise CalculaterException(f"Error calculating: {str(e)}")
 
-    def generateData(self) -> dict[str, dict[str, dict | list]]:
-        response: dict[str, dict[str, dict | list]] = {}
+    def generateData(self) -> dict[str, dict[str, dict | list | object]]:
+        response: dict[str, dict[str, dict | list | object]] = {}
 
         # Set up stand data before everything else
         for sheet in self._spreadsheet.sheets:
@@ -287,7 +291,7 @@ class SpreadsheetInterpreter:
 
         # Set other data
         for sheet in self._spreadsheet.sheets:
-            responseData: dict[str, dict | list] = {}
+            responseData: dict[str, dict | object] = {}
 
             if sheet.name == "Timely Down Stands":
                 if len(sheet.rows) < 2:
@@ -442,6 +446,27 @@ class SpreadsheetInterpreter:
                     stands.append(stand)
 
                 responseData["stands"] = stands
+
+            elif sheet.name == "Settings":
+                if len(sheet.columns) < 2:
+                    raise IndexError(f"{sheet.name} sheet has too little columns")
+
+                infoColumn = sheet.columns[1]
+
+                num = 1
+                if len(sheet.columns) < num:
+                    raise IndexError(
+                        f"{sheet.name} sheet has too little values in columns: expected {num}"
+                    )
+
+                branchTime = infoColumn[0]
+
+                try:
+                    responseData["branch time"] = Time().set12Time(
+                        int(branchTime[:2]), int(branchTime[3:5]), branchTime[6:8]
+                    )
+                except Exception as e:
+                    raise Exception(f"Error setting branch time: f{str(e)}")
 
             if sheet.name != "Up Stands" and sheet.name != "Lifeguards":
                 response[sheet.name] = responseData

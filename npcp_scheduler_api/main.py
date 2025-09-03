@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 import logging
+import traceback
 
 from Google_Sheet_Interpreter import SpreadsheetInterpreter
 
@@ -24,6 +25,7 @@ async def read_data(request: Request):
 
     except Exception as e:
         logger.error(f"could not parse information: {e}")
+        logger.error(traceback.format_exc())
         return {"status": "error", "message": f"Error parsing info: {str(e)}"}
 
     # Final checks and return response
@@ -34,6 +36,7 @@ async def read_data(request: Request):
         "Timely Down Stands",
         "Priority Down Stands",
         "Fill-In Down Stands",
+        "Settings"
     )
 
     for value in requiredValues:

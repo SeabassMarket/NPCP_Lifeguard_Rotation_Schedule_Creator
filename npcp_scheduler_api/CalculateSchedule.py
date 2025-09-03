@@ -35,6 +35,7 @@ class CalculateSchedule:
             "Timely Down Stands",
             "Priority Down Stands",
             "Fill-In Down Stands",
+            "Settings",
         )
 
         for value in requiredValues:
@@ -97,7 +98,7 @@ class CalculateSchedule:
         self._breaks = []
 
         # Initialize branch time
-        self._branchTime = Time(0, 0)
+        self._branchTime = data["Settings"]["branch time"]
 
     def addLifeguardSchedule(self, lifeguardNamesToSchedule: dict[str, list[str]]):
         for name in lifeguardNamesToSchedule:
@@ -118,9 +119,7 @@ class CalculateSchedule:
 
                 index += 1
 
-    def calculateSchedule(self, branchTime: Time = Time(0, 0)):
-        self._branchTime = branchTime
-
+    def calculateSchedule(self):
         self.resetSchedule()
         self.assignBreaks()
         self.calculateStands()
