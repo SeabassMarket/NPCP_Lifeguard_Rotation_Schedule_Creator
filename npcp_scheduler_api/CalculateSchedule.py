@@ -142,7 +142,7 @@ class CalculateSchedule:
 
                 stands.append(stand)
 
-            scheduleData[currentTime.getStripped12Time()] = stands
+            scheduleData[currentTime.get12Time()] = stands
 
         lifeguardNames: list[str] = list(self._lifeguardDict.keys())
 
