@@ -28,22 +28,6 @@ async def read_data(request: Request):
         logger.error(traceback.format_exc())
         return {"status": "error", "message": f"Error parsing info: {str(e)}"}
 
-    # Final checks and return response
-
-    requiredValues = (
-        "Lifeguards",
-        "Up Stands",
-        "Timely Down Stands",
-        "Priority Down Stands",
-        "Fill-In Down Stands",
-        "Settings"
-    )
-
-    for value in requiredValues:
-        if value not in response:
-            logger.error(f"Missing sheet: {value}")
-            return {"status": "error", "message": f"Missing sheet: {value}"}
-
     return {"status": "success", "response": response}
 
 

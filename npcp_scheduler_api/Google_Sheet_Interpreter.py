@@ -160,11 +160,11 @@ class SpreadsheetInterpreter:
         raise ValueError('Variable "call" not set to a valid value')
 
     def preview(self):
-        response: dict[str, dict[str, dict | list | object]] = self.generateData()
+        response = self.generateData()
 
         # Iterate through, find time objects, convert them to strings
         for key in response:
-            responseData: dict[str, dict | list | object] = response[key]
+            responseData = response[key]
 
             for responseDataKey in responseData:
                 value = responseData[responseDataKey]
@@ -177,6 +177,21 @@ class SpreadsheetInterpreter:
                 elif isinstance(value, Time):
                     responseData[responseDataKey] = value.get12Time()
 
+        # Check for required values
+        requiredValues = (
+            "Lifeguards",
+            "Up Stands",
+            "Timely Down Stands",
+            "Priority Down Stands",
+            "Fill-In Down Stands",
+            "Settings",
+        )
+
+        for value in requiredValues:
+            if value not in response:
+                logger.error(f"Missing sheet: {value}")
+                raise ValueError(f"Missing sheet: {value}")
+
         # Check for duplicates
         duplicates = checkDuplicateStands(response)
         if len(duplicates) > 0:
@@ -188,22 +203,32 @@ class SpreadsheetInterpreter:
         return response
 
     def calculate(self):
-        data: dict[str, dict[str, dict | list | object]] = self.generateData()
+        response = {}
+
+        calculationInfo = self.preview()
+
+        for key in calculationInfo:
+            response[key] = calculationInfo[key]
+
+        data = self.generateData()
 
         staticAPIInfo = StaticAPIInfo(data)
 
         try:
             calculator = CalculateSchedule(staticAPIInfo)
 
-            response = calculator.calculateSchedule()
+            scheduleInfo = calculator.calculateSchedule()
+
+            for key in scheduleInfo:
+                response[key] = scheduleInfo[key]
 
             return response
         except Exception as e:
             logger.error(traceback.format_exc())
             raise CalculaterException(f"Error calculating: {str(e)}")
 
-    def generateData(self) -> dict[str, dict[str, dict | list | object]]:
-        response: dict[str, dict[str, dict | list | object]] = {}
+    def generateData(self):
+        response = {}
 
         # Set up stand data before everything else
         for sheet in self._spreadsheet.sheets:
