@@ -484,7 +484,7 @@ class SpreadsheetInterpreter:
                         f"{sheet.name} sheet has too little values in columns: expected {num}"
                     )
 
-                branchTime = infoColumn[0]
+                branchTime = infoColumn[1]
 
                 try:
                     responseData["branch time"] = Time().set12Time(
