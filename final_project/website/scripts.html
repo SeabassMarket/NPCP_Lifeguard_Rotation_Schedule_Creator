@@ -1,0 +1,936 @@
+<script>
+/* ============================================================================
+   NPCP Lifeguard Scheduler - Client-side JavaScript
+   Modular, clean code following snake_case conventions
+   ============================================================================ */
+
+// ============================================================================
+// GLOBAL STATE MANAGEMENT
+// ============================================================================
+
+const app_state = {
+    current_step: 1,
+    selected_spreadsheet_id: null,
+    selected_spreadsheet_data: null,
+    output_spreadsheet_info: null,
+    selected_output_spreadsheet_id: null,
+    processing_window: null // Track the new tab for processing
+};
+
+// ============================================================================
+// DOM UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Get element by ID with error checking
+ */
+function get_element(element_id) {
+    const element = document.getElementById(element_id);
+    if (!element) {
+        console.error(`Element not found: ${element_id}`);
+    }
+    return element;
+}
+
+/**
+ * Show/hide loading overlay with improved stability
+ */
+function toggle_loading(show, message = 'Processing...') {
+    const overlay = get_element('loading_overlay');
+    const loading_text = document.querySelector('.loading_text');
+
+    if (overlay) {
+        if (show) {
+            // Show loading
+            overlay.style.display = 'flex';
+            overlay.style.visibility = 'visible';
+            overlay.style.opacity = '1';
+            document.body.style.overflow = 'hidden';
+
+            if (loading_text && message) {
+                loading_text.textContent = message;
+            }
+        } else {
+            // Hide loading
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                overlay.style.visibility = 'hidden';
+                document.body.style.overflow = 'auto';
+            }, 150); // Small delay for smooth transition
+        }
+    }
+}
+
+/**
+ * Show error message
+ */
+function show_error(message) {
+    console.error('Error:', message);
+    const error_container = get_element('error_container');
+    const error_message = get_element('error_message');
+
+    if (error_container && error_message) {
+        error_message.textContent = message;
+        error_container.style.display = 'block';
+        error_container.style.opacity = '1';
+
+        // Auto-hide after 8 seconds
+        setTimeout(() => {
+            if (error_container.style.display !== 'none') {
+                error_container.style.opacity = '0';
+                setTimeout(() => {
+                    error_container.style.display = 'none';
+                }, 300);
+            }
+        }, 8000);
+    }
+}
+
+/**
+ * Show success message with checkmark
+ */
+function show_success(message) {
+    console.log('Success:', message);
+    const success_container = get_element('success_popup_container');
+    const success_message = get_element('success_popup_message');
+
+    if (success_container && success_message) {
+        success_message.textContent = message;
+        success_container.style.display = 'block';
+        success_container.style.visibility = 'visible';
+        success_container.style.opacity = '1';
+
+        // Auto-hide after 6 seconds
+        setTimeout(() => {
+            if (success_container.style.display !== 'none') {
+                success_container.style.opacity = '0';
+                setTimeout(() => {
+                    success_container.style.display = 'none';
+                    success_container.style.visibility = 'hidden';
+                }, 300);
+            }
+        }, 6000);
+    }
+}
+
+/**
+ * Show/hide step sections
+ */
+function show_step_section(step_number) {
+    const sections = ['selection_section', 'confirmation_section', 'output_section', 'results_section'];
+
+    sections.forEach((section_id, index) => {
+        const section = get_element(section_id);
+        if (section) {
+            section.style.display = (index + 1 <= step_number) ? 'block' : 'none';
+        }
+    });
+
+    app_state.current_step = step_number;
+}
+
+// ============================================================================
+// TEMPLATE OPERATIONS
+// ============================================================================
+
+/**
+ * Create a copy of the template spreadsheet
+ */
+function create_template_copy() {
+    toggle_loading(true, 'Creating template copy...');
+
+    // Pre-open a tab to avoid popup blocking
+    const newWindow = window.open('', '_blank');
+
+    google.script.run
+        .withSuccessHandler(result => handle_template_created(result, newWindow))
+        .withFailureHandler(error => handle_template_error(error, newWindow))
+        .create_template_copy();
+}
+
+/**
+ * Handle successful template creation
+ */
+function handle_template_created(result, newWindow) {
+    toggle_loading(false);
+
+    if (result && result.status === 'success') {
+        // Redirect pre-opened tab
+        newWindow.location.href = result.data.url;
+
+        // Refresh spreadsheet list to include the new template
+        load_user_spreadsheets();
+
+        show_success(
+            'Template created! Fill it out in the new tab, then return here to select it.'
+        );
+    } else {
+        if (newWindow) newWindow.close();
+        show_error(result?.message || 'Failed to create template copy');
+    }
+}
+
+/**
+ * Handle failed template creation
+ */
+function handle_template_error(error, newWindow) {
+    if (newWindow) newWindow.close();
+    handle_api_error(error);
+}
+
+// ============================================================================
+// GOOGLE SHEETS OPERATIONS
+// ============================================================================
+
+/**
+ * Load user's spreadsheets into dropdown
+ */
+function load_user_spreadsheets() {
+    toggle_loading(true, 'Loading your spreadsheets...');
+
+    google.script.run
+        .withSuccessHandler(handle_spreadsheets_loaded)
+        .withFailureHandler(handle_api_error)
+        .get_user_spreadsheets();
+}
+
+/**
+ * Handle successful spreadsheet loading
+ */
+function handle_spreadsheets_loaded(result) {
+    toggle_loading(false);
+
+    if (result && result.status === 'success') {
+        const select_element = get_element('input_spreadsheet_select');
+        const load_btn = get_element('load_spreadsheet_btn');
+
+        if (select_element) {
+            // Clear existing options
+            select_element.innerHTML = '<option value="">-- Select a spreadsheet --</option>';
+
+            // Add spreadsheet options
+            result.data.forEach(spreadsheet => {
+                const option = document.createElement('option');
+                option.value = spreadsheet.id;
+                option.textContent = spreadsheet.name;
+                select_element.appendChild(option);
+            });
+
+            // Enable load button when selection changes
+            select_element.addEventListener('change', function() {
+                if (load_btn) {
+                    load_btn.disabled = !this.value;
+                }
+                app_state.selected_spreadsheet_id = this.value;
+            });
+        }
+    } else {
+        show_error(result?.message || 'Failed to load spreadsheets');
+    }
+}
+
+/**
+ * Load user's spreadsheets for output dropdown
+ */
+function load_output_spreadsheets() {
+    // Don't show loading for this as it's a background operation
+    google.script.run
+        .withSuccessHandler(handle_output_spreadsheets_loaded)
+        .withFailureHandler(handle_api_error)
+        .get_user_spreadsheets_for_output();
+}
+
+/**
+ * Handle successful output spreadsheet loading
+ */
+function handle_output_spreadsheets_loaded(result) {
+    if (result && result.status === 'success') {
+        const select_element = get_element('output_spreadsheet_select');
+
+        if (select_element) {
+            // Clear existing options
+            select_element.innerHTML = '<option value="">-- Select an existing spreadsheet --</option>';
+
+            // Add spreadsheet options
+            result.data.forEach(spreadsheet => {
+                const option = document.createElement('option');
+                option.value = spreadsheet.id;
+                option.textContent = spreadsheet.name;
+                select_element.appendChild(option);
+            });
+
+            // Update selection state when selection changes
+            select_element.addEventListener('change', function() {
+                app_state.selected_output_spreadsheet_id = this.value;
+            });
+        }
+    } else {
+        console.warn('Failed to load output spreadsheets:', result?.message);
+    }
+}
+
+/**
+ * Load selected spreadsheet data
+ */
+function load_spreadsheet_data() {
+    if (!app_state.selected_spreadsheet_id) {
+        show_error('Please select a spreadsheet first');
+        return;
+    }
+
+    toggle_loading(true, 'Processing spreadsheet data...');
+
+    google.script.run
+        .withSuccessHandler(handle_spreadsheet_data_loaded)
+        .withFailureHandler(handle_api_error)
+        .read_spreadsheet_data(app_state.selected_spreadsheet_id, "preview");
+}
+
+/**
+ * Handle successful spreadsheet data loading
+ */
+function handle_spreadsheet_data_loaded(result) {
+    toggle_loading(false);
+
+    // Add null check and better error handling
+    if (!result) {
+        show_error('No response from server. Please try again or check permissions.');
+        return;
+    }
+
+    if (result.status === 'success') {
+        show_success("Sheet data successfully loaded!");
+        app_state.selected_spreadsheet_data = result.data;
+        display_schedule_analysis(result.data);
+
+        // Load output spreadsheets when we reach step 3
+        load_output_spreadsheets();
+
+        show_step_section(3); // Show up to output section
+    } else {
+        show_error(result.message || 'Failed to load spreadsheet data');
+    }
+}
+
+// ============================================================================
+// OUTPUT TYPE MANAGEMENT
+// ============================================================================
+
+/**
+ * Toggle visibility of output sections based on radio selection
+ */
+function toggle_output_sections() {
+    const new_section = get_element('new_spreadsheet_section');
+    const existing_section = get_element('existing_spreadsheet_section');
+    const selected_type = document.querySelector('input[name="output_type"]:checked')?.value;
+
+    if (new_section && existing_section) {
+        if (selected_type === 'new') {
+            new_section.style.display = 'block';
+            existing_section.style.display = 'none';
+        } else if (selected_type === 'existing') {
+            new_section.style.display = 'none';
+            existing_section.style.display = 'block';
+        }
+    }
+}
+
+// ============================================================================
+// SCHEDULE DATA DISPLAY FUNCTIONS
+// ============================================================================
+
+/**
+ * Display schedule analysis results
+ */
+function display_schedule_analysis(data) {
+    const preview_title = get_element('preview_title');
+    const preview_info = get_element('preview_info');
+
+    if (preview_title) {
+        preview_title.textContent = `${data.spreadsheet_name} - Schedule Analysis`;
+    }
+
+    if (preview_info) {
+        preview_info.textContent = 'Analysis complete';
+    }
+
+    // Check if API response exists and has the expected structure
+    if (!data.api_response || !data.api_response.response) {
+        show_error('Invalid API response format');
+        return;
+    }
+
+    const api_data = data.api_response.response;
+
+    // Display each section
+    display_lifeguards(api_data.Lifeguards || {});
+    display_up_stands(api_data['Up Stands'] || {});
+    display_timely_down_stands(api_data['Timely Down Stands'] || {});
+    display_priority_down_stands(api_data['Priority Down Stands'] || {});
+    display_fill_in_down_stands(api_data['Fill-In Down Stands'] || {});
+}
+
+/**
+ * HELPER FOR ALL
+ * Convert a time string like "09:20 AM" into minutes since midnight
+ */
+function parseTimeToMinutes(timeStr) {
+    if (!timeStr || timeStr === '-') return Infinity; // push missing times to the end
+
+    const [time, meridian] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+
+    if (meridian === 'PM' && hours !== 12) hours += 12;
+    if (meridian === 'AM' && hours === 12) hours = 0;
+
+    return hours * 60 + minutes;
+}
+
+/**
+ * Display Lifeguards section (sorted by start then end time)
+ */
+function display_lifeguards(lifeguards_data) {
+    const container = get_element('lifeguards_container');
+    if (!container) return;
+
+    const table = document.createElement('table');
+    table.className = 'lifeguards_table';
+
+    // Create header
+    const header = table.createTHead();
+    const header_row = header.insertRow();
+    ['Name', 'Start Time', 'End Time'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        header_row.appendChild(th);
+    });
+
+    // Sort lifeguards by start time, then by end time
+    const lifeguards_sorted = Object.entries(lifeguards_data).sort(([nameA, infoA], [nameB, infoB]) => {
+        const startA = infoA.times && infoA.times.length > 0 ? parseTimeToMinutes(infoA.times[0]) : Infinity;
+        const endA   = infoA.times && infoA.times.length > 1 ? parseTimeToMinutes(infoA.times[infoA.times.length - 1]) : Infinity;
+
+        const startB = infoB.times && infoB.times.length > 0 ? parseTimeToMinutes(infoB.times[0]) : Infinity;
+        const endB   = infoB.times && infoB.times.length > 1 ? parseTimeToMinutes(infoB.times[infoB.times.length - 1]) : Infinity;
+
+        // Primary sort: start time
+        if (startA !== startB) return startA - startB;
+        // Tie breaker: end time
+        return endA - endB;
+    });
+
+    // Create body
+    const tbody = table.createTBody();
+
+    lifeguards_sorted.forEach(([name, info]) => {
+        const row = tbody.insertRow();
+
+        // Name
+        const name_cell = row.insertCell();
+        name_cell.textContent = name;
+
+        // Start time
+        const start_cell = row.insertCell();
+        start_cell.textContent = info.times && info.times.length > 0 ? info.times[0] : '-';
+
+        // End time
+        const end_cell = row.insertCell();
+        end_cell.textContent = info.times && info.times.length > 1 ? info.times[info.times.length - 1] : '-';
+    });
+
+    container.innerHTML = '';
+    container.appendChild(table);
+}
+
+/**
+ * Display Up Stands section (sorted by first time, then last time)
+ */
+function display_up_stands(up_stands_data) {
+    const container = get_element('up_stands_container');
+    if (!container) return;
+
+    const table = document.createElement('table');
+    table.className = 'up_stands_table';
+
+    // Create header
+    const header = table.createTHead();
+    const header_row = header.insertRow();
+    ['Stand', 'Time 1', 'Time 2', '...', 'Time N-1', 'Time N'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        header_row.appendChild(th);
+    });
+
+    // Sort stands by earliest first time, then earliest last time
+    const stands_sorted = Object.entries(up_stands_data).sort(([nameA, infoA], [nameB, infoB]) => {
+        const timesA = infoA.times || [];
+        const timesB = infoB.times || [];
+
+        const firstA = timesA.length > 0 ? parseTimeToMinutes(timesA[0]) : Infinity;
+        const lastA  = timesA.length > 0 ? parseTimeToMinutes(timesA[timesA.length - 1]) : Infinity;
+
+        const firstB = timesB.length > 0 ? parseTimeToMinutes(timesB[0]) : Infinity;
+        const lastB  = timesB.length > 0 ? parseTimeToMinutes(timesB[timesB.length - 1]) : Infinity;
+
+        if (firstA !== firstB) return firstA - firstB;  // primary: earliest start
+        return lastA - lastB;                           // tie-breaker: earliest end
+    });
+
+    // Create body
+    const tbody = table.createTBody();
+
+    stands_sorted.forEach(([stand_name, info]) => {
+        const row = tbody.insertRow();
+        const times = info.times || [];
+
+        // Stand name
+        const name_cell = row.insertCell();
+        name_cell.textContent = stand_name;
+
+        // Time display logic
+        if (times.length <= 5) {
+            for (let i = 0; i < 5; i++) {
+                const cell = row.insertCell();
+                cell.textContent = times[i] || '';
+            }
+        } else {
+            const cell1 = row.insertCell();
+            cell1.textContent = times[0] || '';
+
+            const cell2 = row.insertCell();
+            cell2.textContent = times[1] || '';
+
+            const cell3 = row.insertCell();
+            cell3.textContent = '...';
+
+            const cell4 = row.insertCell();
+            cell4.textContent = times[times.length - 2] || '';
+
+            const cell5 = row.insertCell();
+            cell5.textContent = times[times.length - 1] || '';
+        }
+    });
+
+    container.innerHTML = '';
+    container.appendChild(table);
+}
+
+/**
+ * Display Timely Down Stands section (sorted by earliest first time, then earliest last time)
+ */
+function display_timely_down_stands(timely_down_stands_data) {
+    const container = get_element('timely_down_stands_container');
+    if (!container) return;
+
+    const table = document.createElement('table');
+    table.className = 'timely_down_stands_table';
+
+    // Create header
+    const header = table.createTHead();
+    const header_row = header.insertRow();
+    ['Stand', 'Number', 'Time 1', '...', 'Time N'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        header_row.appendChild(th);
+    });
+
+    // Sort stands by earliest first time, then earliest last time
+    const stands_sorted = Object.entries(timely_down_stands_data).sort(([nameA, infoA], [nameB, infoB]) => {
+        const timesA = infoA.times || [];
+        const timesB = infoB.times || [];
+
+        const firstA = timesA.length > 0 ? parseTimeToMinutes(timesA[0]) : Infinity;
+        const lastA  = timesA.length > 0 ? parseTimeToMinutes(timesA[timesA.length - 1]) : Infinity;
+
+        const firstB = timesB.length > 0 ? parseTimeToMinutes(timesB[0]) : Infinity;
+        const lastB  = timesB.length > 0 ? parseTimeToMinutes(timesB[timesB.length - 1]) : Infinity;
+
+        if (firstA !== firstB) return firstA - firstB;  // primary: earliest start
+        return lastA - lastB;                           // tie-breaker: earliest end
+    });
+
+    // Create body
+    const tbody = table.createTBody();
+
+    stands_sorted.forEach(([stand_name, info]) => {
+        const row = tbody.insertRow();
+        const times = info.times || [];
+        const num = info.num;
+
+        // Stand name
+        const name_cell = row.insertCell();
+        name_cell.textContent = stand_name;
+
+        // Number (convert to int)
+        const num_cell = row.insertCell();
+        num_cell.textContent = num ? Math.round(Number(num)) : '';
+
+        // Time display logic
+        if (times.length <= 3) {
+            for (let i = 0; i < 3; i++) {
+                const cell = row.insertCell();
+                cell.textContent = times[i] || '';
+            }
+        } else {
+            const cell1 = row.insertCell();
+            cell1.textContent = times[0] || '';
+
+            const cell2 = row.insertCell();
+            cell2.textContent = '...';
+
+            const cell3 = row.insertCell();
+            cell3.textContent = times[times.length - 1] || '';
+        }
+    });
+
+    container.innerHTML = '';
+    container.appendChild(table);
+}
+
+/**
+ * Display Priority Down Stands section
+ */
+function display_priority_down_stands(priority_down_stands_data) {
+    const container = get_element('priority_down_stands_container');
+    if (!container) return;
+
+    const table = document.createElement('table');
+    table.className = 'priority_down_stands_table';
+
+    // Create header
+    const header = table.createTHead();
+    const header_row = header.insertRow();
+    ['Stand', 'Priority'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        header_row.appendChild(th);
+    });
+
+    // Create body
+    const tbody = table.createTBody();
+
+    const stands = priority_down_stands_data.stands || [];
+    stands.forEach((stand, index) => {
+        const row = tbody.insertRow();
+
+        // Stand name
+        const stand_cell = row.insertCell();
+        stand_cell.textContent = stand;
+
+        // Priority number (index + 1)
+        const priority_cell = row.insertCell();
+        priority_cell.textContent = index + 1;
+    });
+
+    container.innerHTML = '';
+    container.appendChild(table);
+}
+
+/**
+ * Display Fill-In Down Stands section
+ */
+function display_fill_in_down_stands(fill_in_down_stands_data) {
+    const container = get_element('fill_in_down_stands_container');
+    if (!container) return;
+
+    const list_div = document.createElement('div');
+    list_div.className = 'fill_in_stands_list';
+
+    const stands = fill_in_down_stands_data.stands || [];
+
+    if (stands.length === 0) {
+        const empty_item = document.createElement('div');
+        empty_item.className = 'fill_in_stands_item';
+        empty_item.textContent = 'No fill-in stands';
+        list_div.appendChild(empty_item);
+    } else {
+        stands.forEach(stand => {
+            const item = document.createElement('div');
+            item.className = 'fill_in_stands_item';
+            item.textContent = stand;
+            list_div.appendChild(item);
+        });
+    }
+
+    container.innerHTML = '';
+    container.appendChild(list_div);
+}
+
+// ============================================================================
+// PROCESSING WORKFLOW
+// ============================================================================
+
+/**
+ * Process the lifeguard schedule
+ */
+function process_schedule() {
+    const output_type = document.querySelector('input[name="output_type"]:checked')?.value;
+    const create_new = output_type === 'new';
+
+    let output_name = '';
+    let existing_output_id = null;
+
+    // Get values based on output type
+    if (create_new) {
+        output_name = get_element('output_name_input')?.value?.trim();
+        if (!output_name) {
+            show_error('Please enter an output spreadsheet name');
+            return;
+        }
+    } else {
+        existing_output_id = app_state.selected_output_spreadsheet_id;
+        if (!existing_output_id) {
+            show_error('Please select an existing spreadsheet');
+            return;
+        }
+        // For existing spreadsheets, we'll use the selected spreadsheet's name
+        const selected_option = get_element('output_spreadsheet_select')?.selectedOptions[0];
+        output_name = selected_option?.textContent || 'Existing Spreadsheet';
+    }
+
+    // Validation
+    if (!app_state.selected_spreadsheet_id) {
+        show_error('Please select an input spreadsheet first');
+        return;
+    }
+
+    // For new spreadsheets, pre-open a tab to avoid popup blocking
+    if (create_new) {
+        app_state.processing_window = window.open('', '_blank');
+    }
+
+    toggle_loading(true, 'Processing your schedule...');
+
+    google.script.run
+        .withSuccessHandler(handle_processing_complete)
+        .withFailureHandler(handle_processing_error)
+        .process_lifeguard_schedule(app_state.selected_spreadsheet_id, output_name, create_new, existing_output_id);
+}
+
+/**
+ * Handle successful processing completion
+ */
+function handle_processing_complete(result) {
+    toggle_loading(false);
+
+    if (result && result.status === 'success') {
+        app_state.output_spreadsheet_info = result.data.output_spreadsheet;
+
+        // If we created a new spreadsheet and have a pre-opened tab, redirect it
+        if (app_state.processing_window && !app_state.processing_window.closed) {
+            app_state.processing_window.location.href = result.data.output_spreadsheet.url;
+            app_state.processing_window = null; // Clear the reference
+        }
+
+        display_results(result.data);
+        show_step_section(4); // Show results section
+        show_success('Your sheet has been made!');
+    } else {
+        // Close the processing window if there was an error
+        if (app_state.processing_window && !app_state.processing_window.closed) {
+            app_state.processing_window.close();
+            app_state.processing_window = null;
+        }
+        show_error(result?.message || 'Processing failed');
+    }
+}
+
+/**
+ * Handle processing errors
+ */
+function handle_processing_error(error) {
+    toggle_loading(false);
+
+    // Close the processing window if there was an error
+    if (app_state.processing_window && !app_state.processing_window.closed) {
+        app_state.processing_window.close();
+        app_state.processing_window = null;
+    }
+
+    handle_api_error(error);
+}
+
+/**
+ * Display processing results
+ */
+function display_results(data) {
+    const summary_element = get_element('processing_summary');
+    const link_element = get_element('output_spreadsheet_link');
+
+    if (summary_element && data.processing_summary && data.output_spreadsheet) {
+        const summary = data.processing_summary;
+        summary_element.textContent =
+            `Successfully created schedule "${summary.sheet_name}" in file:\n"${data.output_spreadsheet.name}"`;
+    }
+
+    if (link_element && data.output_spreadsheet) {
+        link_element.href = data.output_spreadsheet.url;
+    }
+}
+
+// ============================================================================
+// ERROR HANDLING
+// ============================================================================
+
+/**
+ * Handle API errors
+ */
+function handle_api_error(error) {
+    toggle_loading(false);
+    console.error('API Error:', error);
+
+    // Close processing window on error
+    if (app_state.processing_window && !app_state.processing_window.closed) {
+        app_state.processing_window.close();
+        app_state.processing_window = null;
+    }
+
+    show_error('An error occurred: ' + (error.message || error.toString()));
+}
+
+/**
+ * Reset application state
+ */
+function reset_application() {
+    // Close any open processing windows
+    if (app_state.processing_window && !app_state.processing_window.closed) {
+        app_state.processing_window.close();
+    }
+
+    app_state.current_step = 1;
+    app_state.selected_spreadsheet_id = null;
+    app_state.selected_spreadsheet_data = null;
+    app_state.output_spreadsheet_info = null;
+    app_state.selected_output_spreadsheet_id = null;
+    app_state.processing_window = null;
+
+    // Reset form elements
+    const input_select = get_element('input_spreadsheet_select');
+    const output_input = get_element('output_name_input');
+    const output_select = get_element('output_spreadsheet_select');
+    const create_new_radio = document.querySelector('input[name="output_type"][value="new"]');
+    const load_btn = get_element('load_spreadsheet_btn');
+
+    if (input_select) input_select.selectedIndex = 0;
+    if (output_input) output_input.value = '';
+    if (output_select) output_select.selectedIndex = 0;
+    if (create_new_radio) create_new_radio.checked = true;
+    if (load_btn) load_btn.disabled = true;
+
+    // Reset output section visibility
+    toggle_output_sections();
+
+    // Show only first section
+    show_step_section(1);
+
+    // Reload spreadsheets
+    load_user_spreadsheets();
+}
+
+// ============================================================================
+// EVENT LISTENERS AND INITIALIZATION
+// ============================================================================
+
+/**
+ * Initialize the application
+ */
+function initialize_app() {
+    // Load spreadsheets on page load
+    load_user_spreadsheets();
+
+    // Set up event listeners
+    setup_event_listeners();
+
+    // Initialize output section visibility
+    toggle_output_sections();
+}
+
+/**
+ * Set up all event listeners
+ */
+function setup_event_listeners() {
+    // Load spreadsheet button
+    const load_btn = get_element('load_spreadsheet_btn');
+    if (load_btn) {
+        load_btn.addEventListener('click', load_spreadsheet_data);
+    }
+
+    // Create template button
+    const template_btn = get_element('create_template_btn');
+    if (template_btn) {
+        template_btn.addEventListener('click', create_template_copy);
+    }
+
+    // Process button
+    const process_btn = get_element('process_btn');
+    if (process_btn) {
+        process_btn.addEventListener('click', process_schedule);
+    }
+
+    // Start over button
+    const start_over_btn = get_element('start_over_btn');
+    if (start_over_btn) {
+        start_over_btn.addEventListener('click', reset_application);
+    }
+
+    // Error dismiss button
+    const dismiss_error_btn = get_element('dismiss_error_btn');
+    if (dismiss_error_btn) {
+        dismiss_error_btn.addEventListener('click', function() {
+            const error_container = get_element('error_container');
+            if (error_container) {
+                error_container.style.opacity = '0';
+                setTimeout(() => {
+                    error_container.style.display = 'none';
+                }, 300);
+            }
+        });
+    }
+
+    // Success dismiss button
+    const dismiss_success_btn = get_element('dismiss_success_btn');
+    if (dismiss_success_btn) {
+        dismiss_success_btn.addEventListener('click', function() {
+            const success_container = get_element('success_popup_container');
+            if (success_container) {
+                success_container.style.opacity = '0';
+                setTimeout(() => {
+                    success_container.style.display = 'none';
+                    success_container.style.visibility = 'hidden';
+                }, 300);
+            }
+        });
+    }
+
+    // Output type radio button handlers
+    const radio_buttons = document.querySelectorAll('input[name="output_type"]');
+    radio_buttons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            toggle_output_sections();
+
+            // Auto-generate name for new spreadsheets
+            if (this.value === 'new') {
+                const output_input = get_element('output_name_input');
+                if (output_input && !output_input.value.trim()) {
+                    const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+                    output_input.value = `NPCP-Schedule-${timestamp}`;
+                }
+            }
+        });
+    });
+}
+
+// ============================================================================
+// PAGE LOAD EVENT
+// ============================================================================
+
+// Initialize app when page loads
+document.addEventListener('DOMContentLoaded', initialize_app);
+
+// Fallback initialization for Apps Script environment
+if (typeof google !== 'undefined' && google.script) {
+    // Apps Script environment - initialize immediately
+    initialize_app();
+}
+</script>

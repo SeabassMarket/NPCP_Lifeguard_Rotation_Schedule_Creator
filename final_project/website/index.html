@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPCP Lifeguard Scheduler</title>
+
+    <link rel="icon" type="image/png" href="https://seabassmarket.github.io/NPCP_Lifeguard_Rotation_Schedule_Creator/NPCP_Application_Logo.png">
+    <?!= include('styles'); ?>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1 class="main_title">NPCP Lifeguard Scheduler</h1>
+            <div class="subtitle">Streamline your lifeguard scheduling with ease</div>
+        </header>
+
+        <!-- Step 1: Sheet Selection -->
+        <section class="step_section" id="selection_section">
+            <div class="step_header">
+                <div class="step_number">1</div>
+                <h2>Select Input Spreadsheet</h2>
+            </div>
+
+            <div class="form_group">
+                <label for="input_spreadsheet_select">Choose your input spreadsheet:</label>
+                <select id="input_spreadsheet_select" class="form_control">
+                    <option value="">Loading your spreadsheets...</option>
+                </select>
+                <div class="button_group">
+                    <button id="load_spreadsheet_btn" class="btn btn_secondary" disabled>
+                        Load & Process Schedule
+                    </button>
+                    <button id="create_template_btn" class="btn btn_primary">
+                        Create Input Template
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2: Data Confirmation -->
+        <section class="step_section" id="confirmation_section" style="display: none;">
+            <div class="step_header">
+                <div class="step_number">2</div>
+                <h2>Schedule Analysis Results</h2>
+            </div>
+
+            <div class="schedule_preview">
+                <div class="preview_header">
+                    <span id="preview_title">Schedule Data</span>
+                    <span id="preview_info" class="preview_meta"></span>
+                </div>
+
+                <!-- Lifeguards Section -->
+                <div class="schedule_section">
+                    <h3 class="section_title">Lifeguards</h3>
+                    <div id="lifeguards_container">
+                        <!-- Lifeguards data will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Up Stands Section -->
+                <div class="schedule_section">
+                    <h3 class="section_title">Up Stands</h3>
+                    <div id="up_stands_container">
+                        <!-- Up Stands data will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Timely Down Stands Section -->
+                <div class="schedule_section">
+                    <h3 class="section_title">Timely Down Stands</h3>
+                    <div id="timely_down_stands_container">
+                        <!-- Timely Down Stands data will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Priority Down Stands Section -->
+                <div class="schedule_section">
+                    <h3 class="section_title">Priority Down Stands</h3>
+                    <div id="priority_down_stands_container">
+                        <!-- Priority Down Stands data will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Fill-In Down Stands Section -->
+                <div class="schedule_section">
+                    <h3 class="section_title">Fill-In Down Stands</h3>
+                    <div id="fill_in_down_stands_container">
+                        <!-- Fill-In Down Stands data will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3: Output Configuration -->
+        <section class="step_section" id="output_section" style="display: none;">
+            <div class="step_header">
+                <div class="step_number">3</div>
+                <h2>Configure Output</h2>
+            </div>
+
+            <div class="form_group">
+                <label class="radio_group">
+                    <input type="radio" name="output_type" value="existing" checked>
+                    <span class="radio_label">Use Existing Spreadsheet</span>
+                </label>
+                <label class="radio_group">
+                    <input type="radio" name="output_type" value="new">
+                    <span class="radio_label">Create New Spreadsheet</span>
+                </label>
+            </div>
+
+            <!-- Existing Spreadsheet Section -->
+            <div class="form_group" id="existing_spreadsheet_section" style="display: none;">
+                <label for="output_spreadsheet_select">Choose existing spreadsheet:</label>
+                <select id="output_spreadsheet_select" class="form_control">
+                    <option value="">Select an existing spreadsheet...</option>
+                </select>
+            </div>
+
+            <!-- New Spreadsheet Section -->
+            <div class="form_group" id="new_spreadsheet_section">
+                <label for="output_name_input">New Spreadsheet Name:</label>
+                <input type="text" id="output_name_input" class="form_control"
+                       placeholder="Enter new spreadsheet name...">
+            </div>
+
+            <button id="process_btn" class="btn btn_primary">
+                Process Schedule
+            </button>
+        </section>
+
+        <!-- Step 4: Results -->
+        <section class="step_section" id="results_section" style="display: none;">
+            <div class="step_header">
+                <div class="step_number">4</div>
+                <h2>Processing Complete!</h2>
+            </div>
+
+            <div class="results_container">
+                <div class="success_message">
+                    <div class="success_icon">✓</div>
+                    <div class="success_text">
+                        <h3>Schedule processed successfully!</h3>
+                        <p id="processing_summary"></p>
+                    </div>
+                </div>
+
+                <div class="output_link_container">
+                    <a id="output_spreadsheet_link" href="#" target="_blank" class="btn btn_success">
+                        View your schedule here
+                    </a>
+                </div>
+
+                <button id="start_over_btn" class="btn btn_secondary">
+                    Process Another Schedule
+                </button>
+            </div>
+        </section>
+
+        <!-- Error Display -->
+        <div id="error_container" class="error_container" style="display: none;">
+            <div class="error_content">
+                <div class="error_icon">⚠</div>
+                <div class="error_message" id="error_message"></div>
+                <button id="dismiss_error_btn" class="btn btn_secondary">Dismiss</button>
+            </div>
+        </div>
+
+        <!-- Success Display -->
+        <div id="success_popup_container" class="success_popup_container" style="display: none;">
+            <div class="success_popup_content">
+                <div class="success_popup_icon">✓</div>
+                <div class="success_popup_message " id="success_popup_message"></div>
+                <button id="dismiss_success_btn" class="btn btn_secondary">Dismiss</button>
+            </div>
+        </div>
+
+    </div> <!-- End of container -->
+
+    <!-- Loading Overlay -->
+    <div id="loading_overlay" class="loading_overlay" style="display: none;">
+        <div class="loading_content">
+            <div class="loading_spinner"></div>
+            <div class="loading_text">Processing your schedule...</div>
+        </div>
+    </div>
+
+    <?!= include('scripts'); ?>
+</body>
+</html>
