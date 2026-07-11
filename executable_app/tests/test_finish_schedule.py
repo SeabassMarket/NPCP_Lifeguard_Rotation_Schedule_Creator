@@ -1,11 +1,9 @@
 # import libraries
 import tkinter as tk
 
-from ..InfoManagers.CalculateSchedule import CalculateSchedule
-from ..InfoManagers.StaticAppInfo import StaticAppInfo
-from ..InfoManagers.Time import Time
-
-from ..GoogleAPICommunicators.GoogleSheetsCommunicator import GSCommunicator
+from executable_app.InfoManagers.CalculateSchedule import CalculateSchedule
+from executable_app.InfoManagers.StaticAppInfo import StaticAppInfo
+from executable_app.InfoManagers.Time import Time
 
 """THE FIRST PART OF THIS CODE IS JUST HARDCODING INFORMATION"""
 
@@ -76,11 +74,32 @@ calculator = CalculateSchedule(staticAppInfo)
 calculator.calculateSchedule()
 calculator.printSchedule()
 
-gs = GSCommunicator(staticAppInfo, calculator, 3, 1)
+# Run block length test
+blockLengthToCount: dict[int, int] = {}
+for lifeguard in calculator.getLifeguards():
+    schedule = lifeguard.getSchedule()
 
-gs.setWorksheet("Lifeguard Schedule", "NPCP_GOOGLE_SHEETS_KEY")
-gs.writeScheduleToWorksheet()
-print(f"Schedule uploaded: {gs.getItem('spreadsheet').url}")
+    for currentTime in schedule:
+        currentStand = lifeguard.getStand(currentTime)
+
+        lastTime = Time().setTimeWithMinutes(
+            currentTime.getMinutes() - staticAppInfo.getTimeInterval()
+        )
+        lastStand = lifeguard.getStand(lastTime)
+
+        upStands = calculator.getUpStandNames()
+
+        if currentStand in upStands and lastStand not in upStands:
+            blockLength = lifeguard.getUpStandsFromTime(currentTime, upStands)
+
+            count = blockLengthToCount.get(blockLength, 0)
+
+            blockLengthToCount[blockLength] = count + 1
+
+sortedBlockLengthKeys = sorted(list(blockLengthToCount.keys()))
+for blockLength in sortedBlockLengthKeys:
+    count = blockLengthToCount[blockLength]
+    print(f"There were {count} blocks with length {blockLength}")
 
 print()
 
@@ -88,12 +107,6 @@ print()
 calculator.getLifeguards().pop(11)
 calculator.calculateSchedule(Time(16, 20))
 calculator.printSchedule()
-
-gs = GSCommunicator(staticAppInfo, calculator, 3, 1)
-
-gs.setWorksheet("Emergency Lifeguard Schedule", "NPCP_GOOGLE_SHEETS_KEY")
-gs.writeScheduleToWorksheet()
-print(f"Schedule uploaded: {gs.getItem('spreadsheet').url}")
 
 # Run block length test
 blockLengthToCount: dict[int, int] = {}
