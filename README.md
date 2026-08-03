@@ -1,3 +1,5 @@
+Now being monitored by Cameron
+
 This program has been created for the New Providence Community Pool. 
 Its purpose is to optimize the rotation schedule of lifeguards for the day. 
 "Optimizing" refers to making sure the lifeguards are each treated fairly by equally distributing how long the lifeguards are up on stand at any given time.
